@@ -16,13 +16,33 @@
                     <div class="card-body">
                         <div class="mb-3">
                             <label for="testFile" class="form-label">Select Test File</label>
-                            <select class="form-select" id="testFile" required>
-                                <option value="">Choose a test file...</option>
-                                {% for file in test_files %}
-                                <option value="{{ file.name }}">{{ file.name }} ({{ file.test_count }} tests)</option>
-                                {% endfor %}
-                            </select>
+                            <div class="input-group">
+                                <select class="form-select" id="testFile" required>
+                                    <option value="">Choose a test file...</option>
+                                    {% for file in test_files %}
+                                    <option value="{{ file.name }}">{{ file.name }} ({{ file.test_count }} tests)
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-outline-primary" type="button" id="downloadTestFileBtn"
+                                    onclick="downloadTestFile()" title="Download selected test file">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                            </div>
                         </div>
+
+                        <div class="mb-3">
+                            <label for="uploadTestFile" class="form-label">Upload Test Data File</label>
+                            <div class="input-group">
+                                <input type="file" class="form-control" id="uploadTestFile" accept=".csv,.json">
+                                <button class="btn btn-primary" type="button" onclick="uploadTestFile()">
+                                    <i class="bi bi-upload"></i> Upload
+                                </button>
+                            </div>
+                            <div class="form-text">Accepted formats: .csv, .json</div>
+                        </div>
+
+                        <div id="uploadAlertContainer"></div>
 
                         <div class="mb-3">
                             <label for="language" class="form-label">Language</label>
@@ -217,5 +237,118 @@
         document.getElementById('stopBtn').disabled = true;
         document.getElementById('testLog').innerHTML += '<div class="text-warning"><strong>[WARN] Tests stopped by user</strong></div>';
     });
+
+    // File upload function
+    async function uploadTestFile() {
+        const fileInput = document.getElementById('uploadTestFile');
+        const file = fileInput.files[0];
+        const alertContainer = document.getElementById('uploadAlertContainer');
+
+        if (!file) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> Please select a file to upload.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            return;
+        }
+
+        // Validate file extension
+        const fileName = file.name.toLowerCase();
+        if (!fileName.endsWith('.csv') && !fileName.endsWith('.json')) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> Invalid file type. Only .csv and .json files are allowed.
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/api/upload-test-file', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-success alert-dismissible fade show" role="alert">
+                        <i class="bi bi-check-circle"></i> ${result.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+
+                // Clear the file input
+                fileInput.value = '';
+
+                // Refresh the test file dropdown
+                await refreshTestFileDropdown();
+            } else {
+                alertContainer.innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i> ${result.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+            }
+        } catch (error) {
+            alertContainer.innerHTML = `
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle"></i> Error uploading file: ${error.message}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            `;
+        }
+    }
+
+    // Refresh test file dropdown
+    async function refreshTestFileDropdown() {
+        try {
+            const response = await fetch('/api/test-files');
+            const testFiles = await response.json();
+
+            const testFileSelect = document.getElementById('testFile');
+            const currentValue = testFileSelect.value;
+
+            // Clear existing options except the first one
+            testFileSelect.innerHTML = '<option value="">Choose a test file...</option>';
+
+            // Add updated options
+            testFiles.forEach(file => {
+                const option = document.createElement('option');
+                option.value = file.name;
+                option.textContent = `${file.name} (${file.test_count} tests)`;
+                testFileSelect.appendChild(option);
+            });
+
+            // Restore selection if it still exists
+            if (currentValue) {
+                testFileSelect.value = currentValue;
+            }
+        } catch (error) {
+            console.error('Error refreshing test files:', error);
+        }
+    }
+
+    // Download test file function
+    function downloadTestFile() {
+        const testFileSelect = document.getElementById('testFile');
+        const selectedFile = testFileSelect.value;
+
+        if (!selectedFile) {
+            alert('Please select a test file to download.');
+            return;
+        }
+
+        // Create a temporary link and trigger download
+        window.location.href = `/api/download-test-file/${selectedFile}`;
+    }
 </script>
 {% endblock %}

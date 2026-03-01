@@ -81,6 +81,93 @@
         <div id="alertContainer" class="mt-3"></div>
     </div>
 </div>
+
+<div class="row mt-4">
+    <div class="col-lg-8 mx-auto">
+        <h2 class="mb-4"><i class="bi bi-download"></i> Download Sample Test Data</h2>
+
+        <div class="card">
+            <div class="card-body">
+                <p class="card-text">
+                    Download sample test data files to use as templates for creating your own test cases.
+                    These files demonstrate the correct format and structure for each test data type.
+                </p>
+
+                <div class="row mt-4">
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <i class="bi bi-file-earmark-spreadsheet"></i> CSV - Legacy Format
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text small">
+                                    Simple CSV format for quick testing. All tests use the same API endpoint configured
+                                    in settings.
+                                </p>
+                                <p class="text-muted small mb-2">
+                                    <strong>Fields:</strong> testDescription, customerNumber, invoiceNumber,
+                                    orderNumber, shipTo
+                                </p>
+                                <a href="/api/download-sample/csv-legacy" class="btn btn-primary btn-sm w-100" download>
+                                    <i class="bi bi-download"></i> Download Sample
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-success">
+                            <div class="card-header bg-success text-white">
+                                <i class="bi bi-file-earmark-spreadsheet-fill"></i> CSV - Dynamic Format
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text small">
+                                    Advanced CSV format with full control. Specify HTTP method, endpoint, headers, and
+                                    body for each test.
+                                </p>
+                                <p class="text-muted small mb-2">
+                                    <strong>Features:</strong> Template variables, custom headers, per-test
+                                    configuration
+                                </p>
+                                <a href="/api/download-sample/csv-dynamic" class="btn btn-success btn-sm w-100"
+                                    download>
+                                    <i class="bi bi-download"></i> Download Sample
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <div class="card h-100 border-info">
+                            <div class="card-header bg-info text-white">
+                                <i class="bi bi-file-earmark-code"></i> JSON Format
+                            </div>
+                            <div class="card-body">
+                                <p class="card-text small">
+                                    JSON format for structured test data. Supports all HTTP methods and complex request
+                                    bodies.
+                                </p>
+                                <p class="text-muted small mb-2">
+                                    <strong>Best for:</strong> Complex APIs, nested data structures, multiple HTTP
+                                    methods
+                                </p>
+                                <a href="/api/download-sample/json" class="btn btn-info btn-sm w-100" download>
+                                    <i class="bi bi-download"></i> Download Sample
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="alert alert-info mt-3" role="alert">
+                    <i class="bi bi-info-circle"></i> <strong>Tip:</strong> After downloading a sample file, edit it
+                    with your API details and test data, then upload it on the <a href="{{ url_for('test_runner') }}"
+                        class="alert-link">Run Tests</a> page.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_js %}

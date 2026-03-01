@@ -1,0 +1,22 @@
+test_id,test_category,test_name,priority,method,base_url,endpoint,headers,body,expected_status,expected_response,preconditions,test_data_set,automation_ready,actual_result,status,executed_by,execution_date,defect_id,comments
+TC-SAMPLE-001,Functional,Sample Test - Standard Customer,P0,POST,http://your-api-server.com/api,/endpoint,"Content-Type: application/json, API_KEY:your-api-key-here,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""1234567"",
+  ""shipTo"": ""A01"",
+  ""invoiceNumber"": ""40000001"",
+  ""orderNumber"": ""C000001"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Sample test data for standard customer,,,,,,,
+TC-SAMPLE-002,Functional,Sample Test - High Volume Customer,P1,POST,http://your-api-server.com/api,/endpoint,"Content-Type: application/json, API_KEY:your-api-key-here,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""8888000"",
+  ""shipTo"": ""262"",
+  ""invoiceNumber"": ""40000002"",
+  ""orderNumber"": ""D000002"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Sample test data for high volume customer,,,,,,,
+

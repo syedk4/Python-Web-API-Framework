@@ -1,0 +1,51 @@
+[
+  {
+    "test_name": "Sample Test - Create User",
+    "method": "POST",
+    "base_url": "http://your-api-server.com",
+    "endpoint": "/api/users",
+    "headers": "Content-Type: application/json, API_KEY: your-api-key-here",
+    "body": {
+      "username": "testuser",
+      "email": "test@example.com",
+      "firstName": "Test",
+      "lastName": "User"
+    },
+    "expected_status": "201",
+    "description": "Sample test for creating a new user"
+  },
+  {
+    "test_name": "Sample Test - Get User",
+    "method": "GET",
+    "base_url": "http://your-api-server.com",
+    "endpoint": "/api/users/123",
+    "headers": "Content-Type: application/json, API_KEY: your-api-key-here",
+    "body": {},
+    "expected_status": "200",
+    "description": "Sample test for retrieving user information"
+  },
+  {
+    "test_name": "Sample Test - Update User",
+    "method": "PUT",
+    "base_url": "http://your-api-server.com",
+    "endpoint": "/api/users/123",
+    "headers": "Content-Type: application/json, API_KEY: your-api-key-here",
+    "body": {
+      "email": "updated@example.com",
+      "firstName": "Updated"
+    },
+    "expected_status": "200",
+    "description": "Sample test for updating user information"
+  },
+  {
+    "test_name": "Sample Test - Delete User",
+    "method": "DELETE",
+    "base_url": "http://your-api-server.com",
+    "endpoint": "/api/users/123",
+    "headers": "Content-Type: application/json, API_KEY: your-api-key-here",
+    "body": {},
+    "expected_status": "204",
+    "description": "Sample test for deleting a user"
+  }
+]
+

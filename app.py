@@ -142,6 +142,54 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['csv', 'json']
 
 
+@app.route('/api/download-test-file/<filename>')
+def download_test_file(filename):
+    """Download a test data file from Test_Data directory"""
+    try:
+        # Secure the filename to prevent directory traversal
+        filename = secure_filename(filename)
+        filepath = os.path.join('Test_Data', filename)
+
+        # Check if file exists
+        if not os.path.exists(filepath):
+            return jsonify({'success': False, 'message': 'File not found'}), 404
+
+        # Check if it's an allowed file type
+        if not allowed_file(filename):
+            return jsonify({'success': False, 'message': 'Invalid file type'}), 400
+
+        return send_file(filepath, as_attachment=True, download_name=filename)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/download-sample/<filename>')
+def download_sample_file(filename):
+    """Download a sample test data file"""
+    try:
+        # Map of allowed sample files
+        allowed_samples = {
+            'csv-legacy': 'test-data-sample.csv',
+            'csv-dynamic': 'InvoiceExtraction-TestCases-sample.csv',
+            'json': 'test-data-sample.json'
+        }
+
+        # Get the actual filename
+        actual_filename = allowed_samples.get(filename)
+        if not actual_filename:
+            return jsonify({'success': False, 'message': 'Invalid sample file'}), 400
+
+        filepath = os.path.join('Test_Data', actual_filename)
+
+        # Check if file exists
+        if not os.path.exists(filepath):
+            return jsonify({'success': False, 'message': 'Sample file not found'}), 404
+
+        return send_file(filepath, as_attachment=True, download_name=actual_filename)
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
 @socketio.on('start_tests')
 def handle_start_tests(data):
     """WebSocket handler for starting tests"""

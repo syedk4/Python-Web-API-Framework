@@ -1,0 +1,6 @@
+testDescription,customerNumber,invoiceNumber,orderNumber,shipTo
+Sample Test - Standard Customer,1234567,40000001,C000001,A01
+Sample Test - High Volume Customer,8888000,40000002,D000002,262
+Sample Test - Different Location,8888000,40000003,D000003,261
+Sample Test - Alphanumeric ShipTo,9946600,40000004,C000004,D63
+
