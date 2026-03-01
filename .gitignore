@@ -46,6 +46,10 @@ test-results/*
 database/*.db
 *.log
 
+# Test/Debug files
+test_*.py
+debug_*.py
+
 # OS
 .DS_Store
 Thumbs.db

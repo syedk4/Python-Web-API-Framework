@@ -23,14 +23,17 @@ A web-based API testing framework built with Flask, providing an intuitive inter
 ### 1. Installation
 
 ```bash
-# Clone or navigate to the project directory
-cd C:\Users\slatheef\Documents\HTTPie\HTTPie-Python-Web
+# Clone the repository
+git clone https://github.com/YOUR_USERNAME/HTTPie-Python-Web.git
+cd HTTPie-Python-Web
 
 # Create virtual environment
-py -m venv venv
+python -m venv venv
 
-# Activate virtual environment
+# Activate virtual environment (Windows)
 venv\Scripts\activate
+# Or on Linux/Mac:
+# source venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
@@ -38,21 +41,33 @@ pip install -r requirements.txt
 
 ### 2. Configuration
 
+Create a `config.env` file from the example template:
+
+```bash
+# Copy the example config file
+copy config.env.example config.env  # Windows
+# Or on Linux/Mac:
+# cp config.env.example config.env
+```
+
 Edit `config.env` file with your API settings:
 
 ```env
 API_BASE_URL=http://your-api-server.com/api
 API_ENDPOINT=/your-endpoint
+METHOD=POST
 API_KEY=your-api-key-here
 CORRELATION_ID=test
 TIMEOUT=30
 MAX_RESPONSE_TIME=5000
 ```
 
+**⚠️ Important:** Never commit `config.env` to version control as it contains sensitive API keys!
+
 ### 3. Run the Application
 
 ```bash
-py app.py
+python app.py
 ```
 
 The application will start at: **http://localhost:5000**
@@ -102,6 +117,7 @@ The dashboard provides an overview of:
 2. Enter your API details:
    - API Base URL
    - API Endpoint
+   - HTTP Method (GET, POST, PUT, DELETE, PATCH)
    - API Key
    - Correlation ID
    - Timeout settings
@@ -163,6 +179,7 @@ All configuration can be set in `config.env`:
 
 - `API_BASE_URL` - Base URL of your API
 - `API_ENDPOINT` - Specific endpoint to test
+- `METHOD` - Default HTTP method (GET, POST, PUT, DELETE, PATCH)
 - `API_KEY` - Authentication key
 - `CORRELATION_ID` - Request tracking ID
 - `TIMEOUT` - Request timeout in seconds
