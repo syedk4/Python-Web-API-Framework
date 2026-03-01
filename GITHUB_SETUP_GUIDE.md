@@ -72,10 +72,10 @@ git init
 git add .
 
 # Create initial commit
-git commit -m "Initial commit: HTTPie-Python-Web API testing framework"
+git commit -m "Initial commit: Python-API-Testing-Framework"
 
 # Create GitHub repository and push (will prompt for authentication)
-gh repo create HTTPie-Python-Web --public --source=. --remote=origin --push
+gh repo create Python-API-Testing-Framework --public --source=. --remote=origin --push
 ```
 
 ---
@@ -108,7 +108,7 @@ git status
 
 ### After Pushing - Verify on GitHub
 
-1. Go to your repository on GitHub: `https://github.com/YOUR_USERNAME/HTTPie-Python-Web`
+1. Go to your repository on GitHub: `https://github.com/YOUR_USERNAME/Python-API-Testing-Framework`
 2. Check that:
    - ✅ README.md is displayed on the main page
    - ✅ All necessary files are present

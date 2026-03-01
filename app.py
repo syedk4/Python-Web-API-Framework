@@ -1,5 +1,5 @@
 """
-HTTPie-Python-Web - Flask Application
+Python-API-Testing-Framework - Flask Application
 Main web application with routes for configuration, test execution, and results
 """
 
@@ -19,7 +19,7 @@ from core.report_generator import ReportGenerator
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'httpie-python-web-secret-key-change-in-production'
+app.config['SECRET_KEY'] = 'python-api-testing-framework-secret-key-change-in-production'
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 
@@ -299,7 +299,7 @@ if __name__ == '__main__':
     os.makedirs('test-results', exist_ok=True)
 
     print("=" * 80)
-    print("HTTPie-Python-Web - Starting Application")
+    print("Python-API-Testing-Framework - Starting Application")
     print("=" * 80)
     print()
     print("Server running at: http://localhost:5000")

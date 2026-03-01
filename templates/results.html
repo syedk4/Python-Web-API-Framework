@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}Results - HTTPie-Python-Web{% endblock %}
+{% block title %}Results - Python API Testing Framework{% endblock %}
 
 {% block content %}
 <div class="row">
@@ -42,7 +42,8 @@
                                 </td>
                                 <td>
                                     {% if result.report %}
-                                    <a href="/download/{{ result.report }}" class="btn btn-sm btn-primary" target="_blank">
+                                    <a href="/download/{{ result.report }}" class="btn btn-sm btn-primary"
+                                        target="_blank">
                                         <i class="bi bi-file-earmark-text"></i> View Report
                                     </a>
                                     {% endif %}
@@ -73,22 +74,22 @@
 
 {% block extra_js %}
 <script>
-// Simple search functionality
-document.getElementById('searchBox').addEventListener('keyup', function() {
-    const searchTerm = this.value.toLowerCase();
-    const table = document.getElementById('resultsTable');
-    const rows = table.getElementsByTagName('tr');
+    // Simple search functionality
+    document.getElementById('searchBox').addEventListener('keyup', function () {
+        const searchTerm = this.value.toLowerCase();
+        const table = document.getElementById('resultsTable');
+        const rows = table.getElementsByTagName('tr');
 
-    for (let i = 1; i < rows.length; i++) {
-        const row = rows[i];
-        const text = row.textContent.toLowerCase();
+        for (let i = 1; i < rows.length; i++) {
+            const row = rows[i];
+            const text = row.textContent.toLowerCase();
 
-        if (text.includes(searchTerm)) {
-            row.style.display = '';
-        } else {
-            row.style.display = 'none';
+            if (text.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
         }
-    }
-});
+    });
 </script>
 {% endblock %}

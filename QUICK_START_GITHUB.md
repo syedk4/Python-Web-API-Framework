@@ -1,6 +1,6 @@
 # Quick Start: Push to GitHub
 
-Your repository is already set up at: **https://github.com/syedk4/HTTPie-Python-Web**
+Your repository is already set up at: **https://github.com/syedk4/Python-API-Testing-Framework**
 
 ## ✅ Security Verification
 

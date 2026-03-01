@@ -1,6 +1,8 @@
-# HTTPie-Python-Web
+# Python-API-Testing-Framework
 
-A web-based API testing framework built with Flask, providing an intuitive interface for running, managing, and analyzing API tests.
+A web-based API testing framework built with Flask and Python's `requests` library, providing an intuitive interface for running, managing, and analyzing API tests.
+
+> **Note:** This project was previously named "HTTPie-Python-Web" but has been renamed to better reflect its technology stack. It uses Python's `requests` library, not HTTPie CLI.
 
 ## 🌟 Features
 
@@ -24,8 +26,8 @@ A web-based API testing framework built with Flask, providing an intuitive inter
 
 ```bash
 # Clone the repository
-git clone https://github.com/YOUR_USERNAME/HTTPie-Python-Web.git
-cd HTTPie-Python-Web
+git clone https://github.com/syedk4/Python-API-Testing-Framework.git
+cd Python-API-Testing-Framework
 
 # Create virtual environment
 python -m venv venv
@@ -75,7 +77,7 @@ The application will start at: **http://localhost:5000**
 ## 📁 Project Structure
 
 ```
-HTTPie-Python-Web/
+Python-API-Testing-Framework/
 ├── app.py                      # Main Flask application
 ├── config.env                  # API configuration
 ├── requirements.txt            # Python dependencies

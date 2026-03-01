@@ -3,7 +3,7 @@ REM Script to safely push changes to GitHub
 REM This script verifies that config.env is excluded before pushing
 
 echo ========================================
-echo HTTPie-Python-Web - GitHub Push Script
+echo Python-API-Testing-Framework - GitHub Push Script
 echo ========================================
 echo.
 
@@ -55,7 +55,7 @@ echo ========================================
 echo Push completed!
 echo ========================================
 echo.
-echo Your repository: https://github.com/syedk4/HTTPie-Python-Web
+echo Your repository: https://github.com/syedk4/Python-API-Testing-Framework
 echo.
 pause
 

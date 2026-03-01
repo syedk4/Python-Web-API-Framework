@@ -1,10 +1,10 @@
 '''
-HTTPie-Python-Web Core Module
+Python-API-Testing-Framework Core Module
 Backend logic for API testing framework
 '''
 
 __version__ = "1.0.0"
-__author__ = "HTTPie Team"
+__author__ = "API Testing Team"
 
 from .config_manager import ConfigManager
 from .data_parser import DataParser

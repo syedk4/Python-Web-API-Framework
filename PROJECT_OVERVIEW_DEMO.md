@@ -1,8 +1,18 @@
-# HTTPie-Python-Web - Project Overview & Demo Guide
+# Python-API-Testing-Framework - Project Overview & Demo Guide
 
-**Version:** 1.0.0  
-**Demo Date:** March 2, 2026  
+**Version:** 1.0.0
+**Demo Date:** March 2, 2026
 **Prepared for:** Team Presentation
+
+---
+
+## 📝 Project Name Update
+
+**This project was previously named "HTTPie-Python-Web" but has been renamed to "Python-API-Testing-Framework"** to better reflect its actual technology stack.
+
+The new name accurately represents that this is a Python-based API testing framework using the `requests` library, not HTTPie CLI. This eliminates confusion about dependencies and makes the project's purpose clearer.
+
+See [Section 3: Project Naming History](#3-project-naming-history) for full details.
 
 ---
 
@@ -10,7 +20,7 @@
 
 1. [Project Overview](#1-project-overview)
 2. [Architecture & How It Works](#2-architecture--how-it-works)
-3. [HTTPie Dependency Clarification](#3-httpie-dependency-clarification)
+3. [Project Naming History](#3-project-naming-history)
 4. [Test Data Formats](#4-test-data-formats)
 5. [Key Features for Demo](#5-key-features-for-demo)
 6. [Live Demo Preparation](#6-live-demo-preparation)
@@ -19,11 +29,16 @@
 
 ## 1. Project Overview
 
-### 1.1 What is HTTPie-Python-Web?
+### 1.1 What is Python-API-Testing-Framework?
 
-**HTTPie-Python-Web** is a web-based API testing and automation framework built with Flask. It provides an intuitive, user-friendly interface for managing, executing, and analyzing API tests without requiring command-line expertise.
+**Python-API-Testing-Framework** is a web-based API testing and automation framework built with Flask and Python's `requests` library. It provides an intuitive, user-friendly interface for managing, executing, and analyzing API tests without requiring command-line expertise.
 
 Think of it as a **Postman alternative** with built-in test automation, batch execution, and comprehensive reporting capabilities.
+
+**Technology Foundation:**
+- Built on Flask (web framework) and Python `requests` library (HTTP client)
+- Uses standard Python libraries - no external CLI tools required
+- Completely standalone and self-contained
 
 ### 1.2 Main Purpose & Use Cases
 
@@ -193,26 +208,53 @@ Think of it as a **Postman alternative** with built-in test automation, batch ex
 
 ---
 
-## 3. HTTPie Dependency Clarification
+## 3. Project Naming History
 
-### 3.1 Does This Use HTTPie CLI?
+### 3.1 Why Was the Project Renamed?
 
-**No.** Despite the name "HTTPie-Python-Web", this application **does NOT use the HTTPie CLI tool** or HTTPie service.
+**Previous Name:** HTTPie-Python-Web
+**Current Name:** Python-API-Testing-Framework
 
-### 3.2 What Does It Actually Use?
+The project was renamed to **eliminate confusion** and **accurately reflect the technology stack**.
 
-The application uses **Python's `requests` library** directly for making HTTP calls.
+**Reasons for the Rename:**
+1. **Misleading Name** - "HTTPie-Python-Web" suggested a dependency on HTTPie CLI, which doesn't exist
+2. **Clearer Purpose** - "Python-API-Testing-Framework" immediately communicates what the project does
+3. **Technology Accuracy** - The new name reflects that we use Python's `requests` library
+4. **Professional Branding** - More descriptive and professional for enterprise use
+
+### 3.2 Does This Use HTTPie CLI?
+
+**No. This project has NEVER used HTTPie CLI.**
+
+This application **does NOT use the HTTPie CLI tool**, HTTPie service, or any HTTPie dependencies whatsoever.
+
+**You do NOT need to install HTTPie to use this application.**
+
+### 3.3 What Does It Actually Use?
+
+This is a **`requests`-based framework**, not an HTTPie-based framework.
+
+The application uses **Python's `requests` library (version 2.31.0)** directly for all HTTP calls. This is a standard, widely-used Python HTTP library that comes from the `requests` package.
 
 **Evidence from `requirements.txt`:**
 ```
-requests==2.31.0  ← This is what we use for HTTP calls
+Flask==3.0.0
+Flask-SocketIO==5.3.5
+Flask-CORS==4.0.0
+requests==2.31.0  ← This is our HTTP client library (NOT HTTPie!)
+colorama==0.4.6
+python-dotenv==1.0.0
+Werkzeug==3.0.1
 ```
+
+**Notice:** HTTPie is NOT in the requirements. We only use `requests==2.31.0`.
 
 **Evidence from `core/test_executor.py`:**
 ```python
-import requests  # Line 6
+import requests  # Line 6 - We import requests, not httpie
 
-# Line 123-131: Direct use of requests library
+# Lines 123-131: Direct use of requests library
 response = requests.request(
     method,
     url,
@@ -223,25 +265,64 @@ response = requests.request(
 )
 ```
 
-### 3.3 Why the Name "HTTPie-Python-Web"?
+### 3.4 Why Was It Originally Named "HTTPie-Python-Web"?
 
-The naming is **inspired by HTTPie's philosophy** of making HTTP requests simple and user-friendly:
+The original naming was **inspired by HTTPie's philosophy** of making HTTP requests simple and user-friendly, but we implemented this philosophy using completely different technology.
 
-**HTTPie CLI Philosophy:**
-- Simple, intuitive command-line HTTP client
-- Human-friendly syntax
+**What We Borrowed from HTTPie (Philosophy Only):**
+- Simple, intuitive interface
+- Human-friendly approach
 - Beautiful output formatting
 
-**HTTPie-Python-Web Philosophy:**
+**What We Did NOT Borrow (Technology):**
+- HTTPie CLI tool
+- HTTPie libraries
+- HTTPie dependencies
+
+**Comparison:**
+
+| Aspect | HTTPie CLI | Python-API-Testing-Framework (This Project) |
+|--------|-----------|----------------------------------|
+| **Technology** | HTTPie CLI tool | Python `requests` library |
+| **Interface** | Command-line | Web browser |
+| **Installation** | `pip install httpie` | `pip install -r requirements.txt` (no HTTPie!) |
+| **Usage** | `http GET api.example.com` | Click buttons in web UI |
+| **Output** | Terminal/console | HTML reports |
+| **Batch Testing** | Manual scripting | Built-in CSV/JSON support |
+| **Dependencies** | HTTPie package | Flask + requests package |
+
+**Our Philosophy:**
 - Simple, intuitive **web-based** HTTP testing
 - User-friendly interface (no command line needed)
 - Beautiful HTML reports
+- Uses standard `requests` library under the hood
+
+### 3.5 Installation Clarification
+
+**What you need to install:**
+```powershell
+pip install -r requirements.txt
+```
+
+This installs:
+- Flask (web framework)
+- requests (HTTP client) ← This is what makes HTTP calls
+- Flask-SocketIO (WebSocket support)
+- Other supporting libraries
+
+**What you do NOT need to install:**
+- ❌ HTTPie CLI (`pip install httpie`) - NOT REQUIRED
+- ❌ HTTPie Desktop app - NOT REQUIRED
+- ❌ Any HTTPie-related packages - NOT REQUIRED
 
 **In Summary:**
-- ❌ Does NOT depend on HTTPie CLI
-- ✅ Uses Python `requests` library
-- ✅ Inspired by HTTPie's user-friendly approach
-- ✅ Provides web interface instead of command line
+- ❌ Does NOT depend on HTTPie CLI or any HTTPie packages
+- ❌ Does NOT require HTTPie to be installed
+- ❌ Does NOT use HTTPie libraries or APIs
+- ✅ Uses Python `requests` library (version 2.31.0) exclusively
+- ✅ Originally inspired by HTTPie's user-friendly philosophy
+- ✅ Renamed to Python-API-Testing-Framework for clarity
+- ✅ Completely standalone - no external CLI tool dependencies
 
 ---
 
