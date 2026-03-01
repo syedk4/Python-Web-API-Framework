@@ -1,0 +1,81 @@
+test_id,test_category,test_name,priority,method,base_url,endpoint,headers,body,expected_status,expected_response,preconditions,test_data_set,automation_ready,actual_result,status,executed_by,execution_date,defect_id,comments
+TC-001,Functional,Standard numeric customer with alphanumeric ShipTo,P0,POST,http://aazeus-fnprwb01.ashleyfurniture.com/WebAPI/InvoiceExtraction,/PDFViewer,"Content-Type: application/json, API_KEY:0b4b24cf-0211-4deb-8f2f-280ab556ca78,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""9946600"",
+  ""shipTo"": ""D63"",
+  ""invoiceNumber"": ""40756307"",
+  ""orderNumber"": ""C746966"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Standard numeric customer with alphanumeric ShipTo,,,,,,,
+TC-002,Functional,High-volume customer - Location 262,P1,POST,http://aazeus-fnprwb01.ashleyfurniture.com/WebAPI/InvoiceExtraction,/PDFViewer,"Content-Type: application/json, API_KEY:0b4b24cf-0211-4deb-8f2f-280ab556ca78,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""9946600"",
+  ""shipTo"": ""D63"",
+  ""invoiceNumber"": ""40756307"",
+  ""orderNumber"": ""C746966"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,High-volume customer - Location 262,,,,,,,
+TC-003,Functional,Same customer - Different location 261,P2,POST,http://aazeus-fnprwb01.ashleyfurniture.com/WebAPI/InvoiceExtraction,/PDFViewer,"Content-Type: application/json, API_KEY:0b4b24cf-0211-4deb-8f2f-280ab556ca78,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""9946600"",
+  ""shipTo"": ""D63"",
+  ""invoiceNumber"": ""40756307"",
+  ""orderNumber"": ""C746966"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Same customer - Different location 261,,,,,,,
+TC-004,Functional,Same customer - Alphanumeric location J33,P3,POST,http://aazeus-fnprwb01.ashleyfurniture.com/WebAPI/InvoiceExtraction,/PDFViewer,"Content-Type: application/json, API_KEY:0b4b24cf-0211-4deb-8f2f-280ab556ca78,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""9946600"",
+  ""shipTo"": ""D63"",
+  ""invoiceNumber"": ""40756307"",
+  ""orderNumber"": ""C746966"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Same customer - Alphanumeric location J33,,,,,,,
+TC-005,Functional,Customer 350900 - Location 997,P4,POST,http://aazeus-fnprwb01.ashleyfurniture.com/WebAPI/InvoiceExtraction,/PDFViewer,"Content-Type: application/json, API_KEY:0b4b24cf-0211-4deb-8f2f-280ab556ca78,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""9946600"",
+  ""shipTo"": ""D63"",
+  ""invoiceNumber"": ""40756307"",
+  ""orderNumber"": ""C746966"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Customer 350900 - Location 997,,,,,,,
+TC-006,Functional,Same customer - Same location - Different invoice,P5,POST,http://aazeus-fnprwb01.ashleyfurniture.com/WebAPI/InvoiceExtraction,/PDFViewer,"Content-Type: application/json, API_KEY:0b4b24cf-0211-4deb-8f2f-280ab556ca78,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""9946600"",
+  ""shipTo"": ""D63"",
+  ""invoiceNumber"": ""40756307"",
+  ""orderNumber"": ""C746966"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Same customer - Same location - Different invoice,,,,,,,
+TC-007,Functional,Customer 131100 - Standard location,P6,POST,http://aazeus-fnprwb01.ashleyfurniture.com/WebAPI/InvoiceExtraction,/PDFViewer,"Content-Type: application/json, API_KEY:0b4b24cf-0211-4deb-8f2f-280ab556ca78,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""9946600"",
+  ""shipTo"": ""D63"",
+  ""invoiceNumber"": ""40756307"",
+  ""orderNumber"": ""C746966"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Customer 131100 - Standard location,,,,,,,
+TC-008,Functional,Invalid Test Data,P7,POST,http://aazeus-fnprwb01.ashleyfurniture.com/WebAPI/InvoiceExtraction,/PDFViewer,"Content-Type: application/json, API_KEY:0b4b24cf-0211-4deb-8f2f-280ab556ca78,CORRELATION_ID:test","[
+{
+  ""environment"": ""{{environment}}"",
+  ""customerNumber"": ""9946600"",
+  ""shipTo"": ""D63"",
+  ""invoiceNumber"": ""40756307"",
+  ""orderNumber"": ""C746966"",
+  ""languageCheck"": ""{{languageCheck}}""
+}
+]",200,content-type: application/pdf,,Invalid Test Data,,,,,,,

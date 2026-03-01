@@ -1,0 +1,9 @@
+testDescription,customerNumber,invoiceNumber,orderNumber,shipTo
+Standard numeric customer with alphanumeric ShipTo,9946600,40756307,C746966,D63
+High-volume customer - Location 262,8888000,40761163,D477664,262
+Same customer - Different location 261,8888000,40761172,D477762,261
+Same customer - Alphanumeric location J33,8888000,40761173,D477784,J33
+Customer 350900 - Location 997,350900,40761161,D477633,997
+Same customer - Same location - Different invoice,350900,40761162,D477756,997
+Customer 131100 - Standard location,131100,40761160,D477714,1
+Invalid Test Data,9999999,9999999,ABCD001,12344

@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+
+{% block title %}Run Tests - HTTPie-Python-Web{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <h1 class="mb-4"><i class="bi bi-play-circle"></i> Run Tests</h1>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5><i class="bi bi-gear"></i> Test Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="testFile" class="form-label">Select Test File</label>
+                            <select class="form-select" id="testFile" required>
+                                <option value="">Choose a test file...</option>
+                                {% for file in test_files %}
+                                <option value="{{ file.name }}">{{ file.name }} ({{ file.test_count }} tests)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="language" class="form-label">Language</label>
+                            <select class="form-select" id="language">
+                                <option value="EN-US">English (EN-US)</option>
+                                <option value="FR-CA">French (FR-CA)</option>
+                                <option value="ES-MX">Spanish (ES-MX)</option>
+                            </select>
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button id="startBtn" class="btn btn-success btn-lg" onclick="startTests()">
+                                <i class="bi bi-play-fill"></i> Start Tests
+                            </button>
+                            <button id="stopBtn" class="btn btn-danger btn-lg" onclick="stopTests()" disabled>
+                                <i class="bi bi-stop-fill"></i> Stop Tests
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-info-circle"></i> Current Configuration</h5>
+                    </div>
+                    <div class="card-body">
+                        <p><strong>API URL:</strong><br>{{ config.get('API_BASE_URL', 'Not configured') }}</p>
+                        <p><strong>Endpoint:</strong><br>{{ config.get('API_ENDPOINT', 'Not configured') }}</p>
+                        <p><strong>Timeout:</strong> {{ config.get('TIMEOUT', '30') }}s</p>
+                        {% if not config.get('API_BASE_URL') %}
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Please configure API settings first
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="bi bi-activity"></i> Test Execution</h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="progressSection" style="display: none;">
+                            <div class="mb-3">
+                                <div class="d-flex justify-content-between mb-2">
+                                    <span id="progressText">Ready to start...</span>
+                                    <span id="progressPercent">0%</span>
+                                </div>
+                                <div class="progress" style="height: 30px;">
+                                    <div id="progressBar"
+                                        class="progress-bar progress-bar-striped progress-bar-animated"
+                                        role="progressbar" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <div class="row text-center mb-3">
+                                <div class="col-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6>Total</h6>
+                                            <h3 id="totalTests">0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="card bg-light">
+                                        <div class="card-body">
+                                            <h6>Current</h6>
+                                            <h3 id="currentTest">0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="card bg-success text-white">
+                                        <div class="card-body">
+                                            <h6>Passed</h6>
+                                            <h3 id="passedTests">0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="card bg-danger text-white">
+                                        <div class="card-body">
+                                            <h6>Failed</h6>
+                                            <h3 id="failedTests">0</h3>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="resultsSection" style="display: none;">
+                            <div class="alert alert-success" id="successAlert" style="display: none;">
+                                <h5><i class="bi bi-check-circle"></i> Tests Completed!</h5>
+                                <p id="summaryText"></p>
+                                <a id="reportLink" href="#" class="btn btn-primary" target="_blank">
+                                    <i class="bi bi-file-earmark-text"></i> View Report
+                                </a>
+                            </div>
+                        </div>
+
+                        <div id="logSection">
+                            <h6>Test Log</h6>
+                            <div id="testLog" class="border rounded p-3"
+                                style="height: 400px; overflow-y: auto; background: #f8f9fa; font-family: monospace; font-size: 0.9em;">
+                                <div class="text-muted">Waiting to start tests...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+    const socket = io();
+
+    function startTests() {
+        const testFile = document.getElementById('testFile').value;
+        const language = document.getElementById('language').value;
+
+        if (!testFile) {
+            alert('Please select a test file');
+            return;
+        }
+
+        document.getElementById('startBtn').disabled = true;
+        document.getElementById('stopBtn').disabled = false;
+        document.getElementById('progressSection').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+        document.getElementById('testLog').innerHTML = '<div class="text-info">Starting tests...</div>';
+
+        socket.emit('start_tests', { test_file: testFile, language: language });
+    }
+
+    function stopTests() {
+        socket.emit('stop_tests');
+        document.getElementById('stopBtn').disabled = true;
+    }
+
+    socket.on('test_progress', (data) => {
+        const percent = Math.round((data.current / data.total) * 100);
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressPercent').textContent = percent + '%';
+        document.getElementById('progressText').textContent = `Test ${data.current} of ${data.total}: ${data.test_name}`;
+
+        document.getElementById('totalTests').textContent = data.total;
+        document.getElementById('currentTest').textContent = data.current;
+        document.getElementById('passedTests').textContent = data.passed;
+        document.getElementById('failedTests').textContent = data.failed;
+
+        const statusClass = data.status === 'passed' ? 'text-success' : 'text-danger';
+        const statusIcon = data.status === 'passed' ? '[OK]' : '[ERROR]';
+        const logEntry = `<div class="${statusClass}">[${data.current}/${data.total}] ${statusIcon} ${data.test_name}</div>`;
+        document.getElementById('testLog').innerHTML += logEntry;
+        document.getElementById('testLog').scrollTop = document.getElementById('testLog').scrollHeight;
+    });
+
+    socket.on('tests_complete', (data) => {
+        // Debug: Log received data
+        console.log('DEBUG: Received tests_complete event:', data);
+        console.log('DEBUG: Summary:', data.summary);
+
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('progressBar').classList.remove('progress-bar-animated');
+        document.getElementById('resultsSection').style.display = 'block';
+        document.getElementById('successAlert').style.display = 'block';
+
+        const summary = `Pass Rate: ${data.summary.pass_rate}% (${data.summary.passed}/${data.summary.total} tests passed)`;
+        document.getElementById('summaryText').textContent = summary;
+        document.getElementById('reportLink').href = '/download/' + data.report_path;
+
+        document.getElementById('testLog').innerHTML += '<div class="text-success mt-3"><strong>[OK] All tests completed!</strong></div>';
+    });
+
+    socket.on('test_error', (data) => {
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('testLog').innerHTML += `<div class="text-danger"><strong>Error:</strong> ${data.error}</div>`;
+        alert('Error: ' + data.error);
+    });
+
+    socket.on('tests_stopped', (data) => {
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('stopBtn').disabled = true;
+        document.getElementById('testLog').innerHTML += '<div class="text-warning"><strong>[WARN] Tests stopped by user</strong></div>';
+    });
+</script>
+{% endblock %}
