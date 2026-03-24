@@ -1,0 +1,612 @@
+{% extends "base.html" %}
+
+{% block title %}Scenario Generator - Python API Testing Framework{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="display-5">
+                <i class="bi bi-robot"></i> AI-Powered Test Scenario Generator
+            </h1>
+            <p class="lead text-muted">
+                Generate comprehensive test scenarios automatically from your requirements.
+                No more manual CSV creation!
+            </p>
+        </div>
+    </div>
+
+    <!-- Input Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-pencil-square"></i> Enter Your Requirements or User Story</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label for="requirements" class="form-label fw-bold">Requirements / User Story</label>
+                        <textarea class="form-control font-monospace" id="requirements" rows="12" placeholder="Example:
+
+As a user, I want to create a new account with email and password,
+so that I can access the system.
+
+Acceptance Criteria:
+- Email must be valid format
+- Password must be at least 8 characters
+- Username must be unique
+- API should return 201 on success
+- API should return 400 for invalid data
+
+API Details (optional):
+- Base URL: http://api.example.com
+- Endpoint: /api/users
+- Method: POST"></textarea>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i> <strong>Tips:</strong>
+                        <ul class="mb-0 mt-2">
+                            <li>Include acceptance criteria and validation rules</li>
+                            <li>Mention expected status codes (200, 201, 400, etc.)</li>
+                            <li>Specify business rules and constraints</li>
+                            <li>Add API details like base URL and endpoint (optional)</li>
+                        </ul>
+                    </div>
+
+                    <!-- Phase 2: LLM Toggle -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="useLLM" checked>
+                                <label class="form-check-label" for="useLLM">
+                                    <i class="bi bi-robot"></i> <strong>Use AI-Powered Parsing (Phase 2)</strong>
+                                    <span class="badge bg-success ms-2" id="llmStatusBadge">Checking...</span>
+                                </label>
+                                <div class="form-text" id="llmStatusText">Checking LLM availability...</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted" id="llmCostInfo"></small>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary btn-lg" id="generateBtn" onclick="generateScenarios()">
+                            <i class="bi bi-magic"></i> Generate Test Scenarios
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Indicator -->
+    <div class="row mb-4" id="loadingSection" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3 text-muted">Analyzing requirements and generating scenarios...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Section -->
+    <div class="row mb-4" id="resultsSection" style="display: none;">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-check-circle"></i> Generated Test Scenarios
+                        <span class="badge bg-light text-dark" id="scenarioCount">0</span>
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <div class="alert alert-success">
+                            <strong>Parsed Information:</strong>
+                            <ul class="mb-0 mt-2" id="parsedInfo"></ul>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive" style="max-height: 500px; overflow-y: auto;">
+                        <table class="table table-striped table-hover" id="scenariosTable">
+                            <thead class="table-dark sticky-top">
+                                <tr>
+                                    <th>Test ID</th>
+                                    <th>Test Name</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Method</th>
+                                    <th>Endpoint</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="scenariosTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <label for="filename" class="form-label fw-bold">Filename</label>
+                            <input type="text" class="form-control" id="filename" value="generated-scenarios"
+                                placeholder="Enter filename">
+                        </div>
+                        <div class="col-md-3">
+                            <label for="fileFormat" class="form-label fw-bold">Format</label>
+                            <select class="form-select" id="fileFormat">
+                                <option value="csv" selected>CSV</option>
+                                <option value="json">JSON</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button class="btn btn-success w-100" onclick="saveScenarios()">
+                                <i class="bi bi-save"></i> Save Scenarios
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Message -->
+    <div class="row mb-4" id="successSection" style="display: none;">
+        <div class="col-12">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <h5 class="alert-heading"><i class="bi bi-check-circle-fill"></i> Success!</h5>
+                <p id="successMessage"></p>
+                <hr>
+                <p class="mb-0">
+                    <a href="/test-runner" class="btn btn-success">
+                        <i class="bi bi-play-circle"></i> Go to Test Runner
+                    </a>
+                </p>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- API Configuration Modal -->
+<div class="modal fade" id="apiConfigModal" tabindex="-1" aria-labelledby="apiConfigModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="apiConfigModalLabel">
+                    <i class="bi bi-gear-fill"></i> API Configuration Required
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i> Please provide the following information to generate test
+                    scenarios:
+                </div>
+
+                <form id="apiConfigForm">
+                    <div class="mb-3">
+                        <label for="modalBaseUrl" class="form-label fw-bold">
+                            Base URL <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="modalBaseUrl"
+                            placeholder="e.g., http://api.example.com or https://api.myapp.com" required>
+                        <div class="form-text">The base URL of your API server</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modalEndpoint" class="form-label fw-bold">
+                            Endpoint <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="modalEndpoint"
+                            placeholder="e.g., /api/users or /v1/products" required>
+                        <div class="form-text">The API endpoint path</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modalApiKey" class="form-label fw-bold">
+                            API Key / Authentication
+                        </label>
+                        <input type="text" class="form-control" id="modalApiKey"
+                            placeholder="e.g., Bearer token, API key, or leave empty if not required">
+                        <div class="form-text">Authentication credentials (optional - only if required by your API)
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modalAuthType" class="form-label fw-bold">
+                            Authentication Type
+                        </label>
+                        <select class="form-select" id="modalAuthType">
+                            <option value="none">No Authentication</option>
+                            <option value="bearer">Bearer Token</option>
+                            <option value="apikey">API Key</option>
+                            <option value="basic">Basic Auth</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" onclick="proceedWithGeneration()">
+                    <i class="bi bi-magic"></i> Generate Scenarios
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Save Location Modal -->
+<div class="modal fade" id="saveLocationModal" tabindex="-1" aria-labelledby="saveLocationModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="saveLocationModalLabel">
+                    <i class="bi bi-save-fill"></i> Save Test Scenarios
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="saveLocationForm">
+                    <div class="mb-3">
+                        <label for="saveFilename" class="form-label fw-bold">
+                            Filename <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="saveFilename" value="generated-scenarios" required>
+                        <div class="form-text">Enter a name for your test scenario file</div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="saveFormat" class="form-label fw-bold">
+                            File Format <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" id="saveFormat">
+                            <option value="csv" selected>CSV (Comma Separated Values)</option>
+                            <option value="json">JSON (JavaScript Object Notation)</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="saveLocation" class="form-label fw-bold">
+                            Save Location
+                        </label>
+                        <input type="text" class="form-control" id="saveLocation" value="Test_Data" readonly>
+                        <div class="form-text">Files will be saved to the Test_Data folder</div>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Note:</strong> If a file with the same name exists, it will be overwritten.
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-success" onclick="confirmSaveScenarios()">
+                    <i class="bi bi-save"></i> Save File
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let generatedScenarios = [];
+    let parsedRequirements = null;
+    let apiConfig = {
+        baseUrl: '',
+        endpoint: '',
+        apiKey: '',
+        authType: 'none'
+    };
+    let llmStatus = {
+        enabled: false,
+        available: false,
+        provider: 'none',
+        total_cost: 0
+    };
+
+    // Check LLM status on page load
+    document.addEventListener('DOMContentLoaded', function () {
+        checkLLMStatus();
+    });
+
+    function checkLLMStatus() {
+        fetch('/api/llm-status')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    llmStatus = data.llm_status;
+                    updateLLMUI();
+                }
+            })
+            .catch(error => {
+                console.error('Error checking LLM status:', error);
+                updateLLMUI();
+            });
+    }
+
+    function updateLLMUI() {
+        const badge = document.getElementById('llmStatusBadge');
+        const statusText = document.getElementById('llmStatusText');
+        const costInfo = document.getElementById('llmCostInfo');
+        const useLLMCheckbox = document.getElementById('useLLM');
+
+        if (llmStatus.enabled && llmStatus.available) {
+            badge.className = 'badge bg-success ms-2';
+            badge.textContent = 'Available';
+            statusText.innerHTML = `<i class="bi bi-check-circle-fill text-success"></i> AI parsing enabled using <strong>${llmStatus.provider.toUpperCase()}</strong>`;
+            costInfo.textContent = `Total cost: $${llmStatus.total_cost.toFixed(4)}`;
+            useLLMCheckbox.disabled = false;
+        } else if (llmStatus.enabled && !llmStatus.available) {
+            badge.className = 'badge bg-warning ms-2';
+            badge.textContent = 'Not Configured';
+            statusText.innerHTML = '<i class="bi bi-exclamation-triangle-fill text-warning"></i> LLM enabled but API key not configured. Using rule-based parsing.';
+            costInfo.textContent = '';
+            useLLMCheckbox.disabled = true;
+            useLLMCheckbox.checked = false;
+        } else {
+            badge.className = 'badge bg-secondary ms-2';
+            badge.textContent = 'Disabled';
+            statusText.innerHTML = '<i class="bi bi-info-circle-fill text-secondary"></i> Using rule-based parsing (Phase 1). Enable LLM in config for AI-powered parsing.';
+            costInfo.textContent = '';
+            useLLMCheckbox.disabled = true;
+            useLLMCheckbox.checked = false;
+        }
+    }
+
+    function generateScenarios() {
+        const requirements = document.getElementById('requirements').value.trim();
+        const useLLM = document.getElementById('useLLM').checked;
+
+        if (!requirements) {
+            alert('Please enter your requirements or user story');
+            return;
+        }
+
+        // First, parse the requirements to check for base URL and endpoint
+        fetch('/api/parse-requirements', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                requirements: requirements,
+                use_llm: useLLM  // Pass LLM toggle state
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    parsedRequirements = data.parsed_info;
+
+                    // Check if base URL and endpoint are present
+                    const hasBaseUrl = parsedRequirements.base_url && parsedRequirements.base_url.trim() !== '';
+                    const hasEndpoint = parsedRequirements.endpoint && parsedRequirements.endpoint.trim() !== '';
+
+                    if (!hasBaseUrl || !hasEndpoint) {
+                        // Show modal to collect missing information
+                        showApiConfigModal(parsedRequirements);
+                    } else {
+                        // Proceed with generation
+                        apiConfig.baseUrl = parsedRequirements.base_url;
+                        apiConfig.endpoint = parsedRequirements.endpoint;
+                        proceedWithGeneration();
+                    }
+                } else {
+                    alert('Error parsing requirements: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error: ' + error);
+            });
+    }
+
+    function showApiConfigModal(parsedInfo) {
+        // Pre-fill any available information
+        document.getElementById('modalBaseUrl').value = parsedInfo.base_url || '';
+        document.getElementById('modalEndpoint').value = parsedInfo.endpoint || '';
+        document.getElementById('modalApiKey').value = '';
+        document.getElementById('modalAuthType').value = 'none';
+
+        // Show the modal
+        const modal = new bootstrap.Modal(document.getElementById('apiConfigModal'));
+        modal.show();
+    }
+
+    function proceedWithGeneration() {
+        // Get values from modal if they were entered
+        const modalBaseUrl = document.getElementById('modalBaseUrl').value.trim();
+        const modalEndpoint = document.getElementById('modalEndpoint').value.trim();
+        const modalApiKey = document.getElementById('modalApiKey').value.trim();
+        const modalAuthType = document.getElementById('modalAuthType').value;
+
+        // Validate required fields
+        if (modalBaseUrl && modalEndpoint) {
+            apiConfig.baseUrl = modalBaseUrl;
+            apiConfig.endpoint = modalEndpoint;
+            apiConfig.apiKey = modalApiKey;
+            apiConfig.authType = modalAuthType;
+        }
+
+        if (!apiConfig.baseUrl || !apiConfig.endpoint) {
+            alert('Base URL and Endpoint are required!');
+            return;
+        }
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('apiConfigModal'));
+        if (modal) {
+            modal.hide();
+        }
+
+        // Show loading
+        document.getElementById('loadingSection').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+        document.getElementById('successSection').style.display = 'none';
+        document.getElementById('generateBtn').disabled = true;
+
+        const requirements = document.getElementById('requirements').value.trim();
+        const useLLM = document.getElementById('useLLM').checked;
+
+        // Call API with complete configuration
+        fetch('/api/generate-scenarios', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                requirements: requirements,
+                base_url: apiConfig.baseUrl,
+                endpoint: apiConfig.endpoint,
+                api_key: apiConfig.apiKey,
+                auth_type: apiConfig.authType,
+                use_llm: useLLM  // Phase 2: Include LLM toggle
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+
+                if (data.success) {
+                    generatedScenarios = data.scenarios;
+                    displayScenarios(data.scenarios, data.parsed_info);
+                } else {
+                    alert('Error: ' + data.error);
+                }
+            })
+            .catch(error => {
+                document.getElementById('loadingSection').style.display = 'none';
+                document.getElementById('generateBtn').disabled = false;
+                alert('Error generating scenarios: ' + error);
+            });
+    }
+
+    function displayScenarios(scenarios, parsedInfo) {
+        // Update count
+        document.getElementById('scenarioCount').textContent = scenarios.length;
+
+        // Display parsed information
+        const parsedInfoHtml = `
+        <li><strong>Entity:</strong> ${parsedInfo.entity || 'N/A'}</li>
+        <li><strong>Operations:</strong> ${parsedInfo.operations ? parsedInfo.operations.join(', ') : 'N/A'}</li>
+        <li><strong>Endpoint:</strong> ${parsedInfo.endpoint || 'Auto-generated'}</li>
+    `;
+        document.getElementById('parsedInfo').innerHTML = parsedInfoHtml;
+
+        // Display scenarios in table
+        const tbody = document.getElementById('scenariosTableBody');
+        tbody.innerHTML = '';
+
+        scenarios.forEach(scenario => {
+            const row = document.createElement('tr');
+            row.innerHTML = `
+            <td><span class="badge bg-secondary">${scenario.test_id}</span></td>
+            <td>${scenario.test_name}</td>
+            <td><span class="badge bg-info">${scenario.test_category}</span></td>
+            <td><span class="badge bg-${getPriorityColor(scenario.priority)}">${scenario.priority}</span></td>
+            <td><span class="badge bg-dark">${scenario.method}</span></td>
+            <td><code>${scenario.endpoint}</code></td>
+            <td><span class="badge bg-${getStatusColor(scenario.expected_status)}">${scenario.expected_status}</span></td>
+        `;
+            tbody.appendChild(row);
+        });
+
+        // Show results section
+        document.getElementById('resultsSection').style.display = 'block';
+
+        // Scroll to results
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function getPriorityColor(priority) {
+        switch (priority) {
+            case 'P0': return 'danger';
+            case 'P1': return 'warning';
+            case 'P2': return 'info';
+            default: return 'secondary';
+        }
+    }
+
+    function getStatusColor(status) {
+        const code = parseInt(status);
+        if (code >= 200 && code < 300) return 'success';
+        if (code >= 400 && code < 500) return 'warning';
+        if (code >= 500) return 'danger';
+        return 'secondary';
+    }
+
+    function saveScenarios() {
+        if (generatedScenarios.length === 0) {
+            alert('No scenarios to save. Please generate scenarios first.');
+            return;
+        }
+
+        // Show the save location modal
+        const modal = new bootstrap.Modal(document.getElementById('saveLocationModal'));
+        modal.show();
+    }
+
+    function confirmSaveScenarios() {
+        const filename = document.getElementById('saveFilename').value.trim();
+        const format = document.getElementById('saveFormat').value;
+
+        if (!filename) {
+            alert('Please enter a filename');
+            return;
+        }
+
+        // Close modal
+        const modal = bootstrap.Modal.getInstance(document.getElementById('saveLocationModal'));
+        if (modal) {
+            modal.hide();
+        }
+
+        // Call save API
+        fetch('/api/save-scenarios', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                scenarios: generatedScenarios,
+                filename: filename,
+                format: format
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('successMessage').innerHTML = `
+                Scenarios saved successfully to <strong>${data.filename}</strong><br>
+                Location: <code>${data.filepath}</code><br>
+                Total scenarios: <strong>${generatedScenarios.length}</strong>
+            `;
+                    document.getElementById('successSection').style.display = 'block';
+                    document.getElementById('successSection').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert('Error saving scenarios: ' + data.error);
+                }
+            })
+            .catch(error => {
+                alert('Error saving scenarios: ' + error);
+            });
+    }
+</script>
+{% endblock %}

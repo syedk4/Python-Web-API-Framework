@@ -1,0 +1,17 @@
+test_id,test_category,test_name,priority,method,base_url,endpoint,headers,body,expected_status,expected_response,preconditions,test_data_set,automation_ready,actual_result,status,executed_by,execution_date,defect_id,comments
+TC-001,Functional,Create post with valid title and body,P0,POST,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,"{""title"": ""My First Post"", ""body"": ""This is the content of my first post"", ""userId"": 1}",201,,,valid_post_creation,Yes,,,,,,
+TC-002,Functional,Get existing post by ID,P0,GET,https://jsonplaceholder.typicode.com,/posts/1,Content-Type: application/json,,200,,,get_post_by_id,Yes,,,,,,
+TC-003,Functional,Get all posts,P0,GET,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,,200,,,get_all_posts,Yes,,,,,,
+TC-004,Functional,Update existing post,P0,PUT,https://jsonplaceholder.typicode.com,/posts/1,Content-Type: application/json,"{""id"": 1, ""title"": ""Updated Title"", ""body"": ""Updated content"", ""userId"": 1}",200,,,update_post,Yes,,,,,,
+TC-005,Functional,Partially update post,P0,PATCH,https://jsonplaceholder.typicode.com,/posts/1,Content-Type: application/json,"{""title"": ""Patched Title""}",200,,,patch_post,Yes,,,,,,
+TC-006,Functional,Delete post,P0,DELETE,https://jsonplaceholder.typicode.com,/posts/1,Content-Type: application/json,,200,,,delete_post,Yes,,,,,,
+TC-007,Validation,Get non-existent post,P1,GET,https://jsonplaceholder.typicode.com,/posts/99999,Content-Type: application/json,,404,,,get_invalid_post,Yes,,,,,,
+TC-008,Validation,Create post with missing title,P0,POST,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,"{""body"": ""Content without title"", ""userId"": 1}",400,,,missing_title,Yes,,,,,,
+TC-009,Validation,Create post with missing body,P0,POST,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,"{""title"": ""Title without body"", ""userId"": 1}",400,,,missing_body,Yes,,,,,,
+TC-010,Validation,Create post with empty title,P1,POST,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,"{""title"": """", ""body"": ""Some content"", ""userId"": 1}",400,,,empty_title,Yes,,,,,,
+TC-011,Edge Case,Create post with very long title,P1,POST,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,"{""title"": ""This is a very long title that exceeds normal length expectations and should be tested for boundary conditions"", ""body"": ""Content"", ""userId"": 1}",201,,,long_title,Yes,,,,,,
+TC-012,Edge Case,Create post with special characters in title,P1,POST,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,"{""title"": ""Special !@#$%^&*() Characters"", ""body"": ""Testing special chars"", ""userId"": 1}",201,,,special_chars_title,Yes,,,,,,
+TC-013,Security,Create post with HTML in body,P1,POST,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,"{""title"": ""HTML Test"", ""body"": ""<h1>Header</h1><p>Paragraph</p>"", ""userId"": 1}",201,,,html_in_body,Yes,,,,,,
+TC-014,Security,Create post with script tag in body,P0,POST,https://jsonplaceholder.typicode.com,/posts,Content-Type: application/json,"{""title"": ""XSS Test"", ""body"": ""<script>alert('xss')</script>"", ""userId"": 1}",400,,,xss_in_body,Yes,,,,,,
+TC-015,Business Logic,Get posts by specific user,P1,GET,https://jsonplaceholder.typicode.com,/posts?userId=1,Content-Type: application/json,,200,,,get_posts_by_user,Yes,,,,,,
+
