@@ -44,6 +44,11 @@ uploads/*
 test-results/*
 !test-results/.gitkeep
 database/*.db
+
+# Logs - Keep structure but ignore content
+logs/*.log
+logs/archive/*
+!logs/archive/README.md
 *.log
 
 # Test/Debug files

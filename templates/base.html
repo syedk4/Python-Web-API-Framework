@@ -35,6 +35,12 @@
                         </a>
                     </li>
                     <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'scenario_generator_page' %}active{% endif %}"
+                            href="{{ url_for('scenario_generator_page') }}">
+                            <i class="bi bi-robot"></i> Scenario Generator
+                        </a>
+                    </li>
+                    <li class="nav-item">
                         <a class="nav-link {% if request.endpoint == 'test_runner' %}active{% endif %}"
                             href="{{ url_for('test_runner') }}">
                             <i class="bi bi-play-circle"></i> Run Tests

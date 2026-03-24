@@ -16,6 +16,10 @@ from core.config_manager import ConfigManager
 from core.data_parser import DataParser
 from core.test_executor import TestExecutor
 from core.report_generator import ReportGenerator
+from core.requirement_parser import RequirementParser
+from core.scenario_generator import ScenarioGenerator
+from core.test_data_generator import TestDataGenerator
+from core.llm_service import LLMService
 
 # Initialize Flask app
 app = Flask(__name__)
@@ -31,6 +35,14 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 config_manager = ConfigManager()
 data_parser = DataParser()
 report_generator = ReportGenerator()
+
+# Phase 2: Initialize LLM service with configuration
+config = config_manager.load_config()
+llm_service = LLMService(config)
+
+# Phase 3: Initialize parsers and generators with LLM support
+requirement_parser = RequirementParser(llm_service=llm_service)
+scenario_generator = ScenarioGenerator(llm_service=llm_service)
 
 # Global test executor (for managing running tests)
 current_executor = None
@@ -94,6 +106,12 @@ def results():
     return render_template('results.html', results=results_list)
 
 
+@app.route('/scenario-generator')
+def scenario_generator_page():
+    """Scenario generator page"""
+    return render_template('scenario_generator.html')
+
+
 @app.route('/api/test-files')
 def api_test_files():
     """API endpoint to get list of test files"""
@@ -135,6 +153,178 @@ def upload_test_file():
         return jsonify({'success': True, 'message': f'File {filename} uploaded successfully'})
 
     return jsonify({'success': False, 'message': 'Invalid file type'}), 400
+
+
+@app.route('/api/parse-requirements', methods=['POST'])
+def api_parse_requirements():
+    """API endpoint to parse requirements and check for missing information"""
+    try:
+        data = request.json
+        requirements_text = data.get('requirements', '')
+        # Get LLM toggle state from frontend
+        use_llm = data.get('use_llm', True)
+
+        if not requirements_text:
+            return jsonify({
+                'success': False,
+                'error': 'Requirements text is required'
+            }), 400
+
+        # Parse requirements with LLM toggle
+        parsed = requirement_parser.parse(requirements_text, use_llm=use_llm)
+
+        return jsonify({
+            'success': True,
+            'parsed_info': {
+                'entity': parsed.get('entity'),
+                'operations': parsed.get('operations'),
+                'endpoint': parsed.get('endpoint'),
+                'base_url': parsed.get('base_url'),
+                'method': parsed.get('method'),
+                'fields': parsed.get('fields', []),
+                'validations': parsed.get('validations', [])
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/llm-status', methods=['GET'])
+def api_llm_status():
+    """Get LLM service status and usage statistics"""
+    try:
+        stats = llm_service.get_usage_stats()
+        return jsonify({
+            'success': True,
+            'llm_status': stats
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/generate-scenarios', methods=['POST'])
+def api_generate_scenarios():
+    """API endpoint to generate test scenarios from requirements"""
+    try:
+        data = request.json
+        requirements_text = data.get('requirements', '')
+        base_url = data.get('base_url', '')
+        endpoint = data.get('endpoint', '')
+        api_key = data.get('api_key', '')
+        auth_type = data.get('auth_type', 'none')
+        use_llm = data.get('use_llm', True)  # Phase 2: Allow toggling LLM
+
+        if not requirements_text:
+            return jsonify({
+                'success': False,
+                'error': 'Requirements text is required'
+            }), 400
+
+        # Parse requirements (with optional LLM)
+        parsed = requirement_parser.parse(requirements_text, use_llm=use_llm)
+
+        # Debug: Log parsing method used
+        print(f"\n{'='*80}")
+        print(
+            f"PARSING METHOD: {'LLM (AI-Powered)' if use_llm and llm_service.is_available() else 'Rule-Based'}")
+        print(f"{'='*80}")
+        print(f"Parsed Data:")
+        import json
+        print(json.dumps(parsed, indent=2))
+        print(f"{'='*80}\n")
+
+        # Override with user-provided values if available
+        if base_url:
+            parsed['base_url'] = base_url
+        if endpoint:
+            parsed['endpoint'] = endpoint
+
+        # Add authentication info to parsed data
+        if api_key and auth_type != 'none':
+            parsed['api_key'] = api_key
+            parsed['auth_type'] = auth_type
+
+        # Phase 3: Generate scenarios (with optional LLM)
+        scenarios = scenario_generator.generate(
+            parsed,
+            use_llm=use_llm,
+            requirements_text=requirements_text
+        )
+
+        return jsonify({
+            'success': True,
+            'scenarios': scenarios,
+            'count': len(scenarios),
+            'parsed_info': {
+                'entity': parsed.get('entity'),
+                'operations': parsed.get('operations'),
+                'endpoint': parsed.get('endpoint'),
+                'base_url': parsed.get('base_url'),
+                'api_key_required': bool(api_key)
+            },
+            'llm_used': use_llm and llm_service.is_available()
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+
+@app.route('/api/save-scenarios', methods=['POST'])
+def api_save_scenarios():
+    """Save generated scenarios to file"""
+    try:
+        data = request.json
+        scenarios = data.get('scenarios', [])
+        filename = data.get('filename', 'generated-scenarios.csv')
+        file_format = data.get('format', 'csv')
+
+        if not scenarios:
+            return jsonify({
+                'success': False,
+                'error': 'No scenarios to save'
+            }), 400
+
+        # Ensure filename has correct extension
+        if not filename.endswith(f'.{file_format}'):
+            filename = f"{filename}.{file_format}"
+
+        # Save to Test_Data folder
+        filepath = os.path.join('Test_Data', filename)
+
+        if file_format == 'csv':
+            # Convert to CSV
+            import csv
+            with open(filepath, 'w', newline='', encoding='utf-8') as f:
+                if scenarios:
+                    writer = csv.DictWriter(f, fieldnames=scenarios[0].keys())
+                    writer.writeheader()
+                    writer.writerows(scenarios)
+
+        elif file_format == 'json':
+            # Save as JSON
+            with open(filepath, 'w', encoding='utf-8') as f:
+                json.dump(scenarios, f, indent=2)
+
+        return jsonify({
+            'success': True,
+            'filepath': filepath,
+            'filename': filename,
+            'message': f'Scenarios saved to {filename}'
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
 
 
 def allowed_file(filename):
