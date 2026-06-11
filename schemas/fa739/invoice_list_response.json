@@ -1,0 +1,128 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FA-739 Invoice List Response Schema",
+  "description": "Validates the response structure for OpenInvoices/runs API endpoint",
+  "type": "object",
+  "required": ["runId", "customerNumber", "fromDate", "toDate", "invoices"],
+  "properties": {
+    "runId": {
+      "type": "number",
+      "description": "Unique run identifier - should be different for each API call"
+    },
+    "customerNumber": {
+      "type": "string",
+      "pattern": "^[0-9]{7}$",
+      "description": "7-digit customer number"
+    },
+    "fromDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "Start date in YYYY-MM-DD format"
+    },
+    "toDate": {
+      "type": "string",
+      "format": "date",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+      "description": "End date in YYYY-MM-DD format"
+    },
+    "invoices": {
+      "type": "array",
+      "description": "List of shortage invoices with --SH suffix",
+      "items": {
+        "$ref": "#/definitions/invoice"
+      }
+    }
+  },
+  "definitions": {
+    "invoice": {
+      "type": "object",
+      "required": [
+        "replacementInvoiceNumber",
+        "customerNumber",
+        "shipToNumber",
+        "orderNumber",
+        "poNumber",
+        "invoiceDate",
+        "invoiceAmount",
+        "paidAmount",
+        "openAmount",
+        "numDays",
+        "creditNumber",
+        "correlationId"
+      ],
+      "properties": {
+        "replacementInvoiceNumber": {
+          "type": "string",
+          "description": "Invoice number"
+        },
+        "customerNumber": {
+          "type": "string",
+          "pattern": "^[0-9]{7}$"
+        },
+        "shipToNumber": {
+          "type": "string",
+          "description": "Ship-to location (can be numeric or alphanumeric like D63)"
+        },
+        "orderNumber": {
+          "type": "string",
+          "description": "Order number (e.g., C951880)"
+        },
+        "poNumber": {
+          "type": "string",
+          "pattern": ".*--SH$",
+          "description": "PO number MUST end with --SH suffix (shortage indicator)"
+        },
+        "invoiceDate": {
+          "type": "string",
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "Invoice date in YYYY-MM-DD format"
+        },
+        "invoiceAmount": {
+          "type": "number",
+          "multipleOf": 0.0001,
+          "description": "Total invoice amount with 4 decimal precision (e.g., 277.0300)"
+        },
+        "paidAmount": {
+          "type": "number",
+          "multipleOf": 0.0001,
+          "description": "Amount already paid with 4 decimal precision"
+        },
+        "openAmount": {
+          "type": "number",
+          "multipleOf": 0.0001,
+          "description": "Outstanding amount with 4 decimal precision (should equal invoiceAmount - paidAmount)"
+        },
+        "numDays": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Age of invoice in days since invoice date"
+        },
+        "creditNumber": {
+          "type": "string",
+          "description": "Credit memo number, or '0' if not credited yet"
+        },
+        "correlationId": {
+          "type": "string",
+          "format": "uuid",
+          "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+          "description": "Unique GUID for tracking each invoice"
+        },
+        "tripNumber": {
+          "type": ["string", "null"],
+          "description": "Trip number if applicable"
+        },
+        "rpOrderNumber": {
+          "type": ["string", "null"],
+          "description": "RP order number if applicable"
+        },
+        "categoryCode": {
+          "type": ["string", "null"],
+          "description": "Category code"
+        }
+      }
+    }
+  }
+}
+

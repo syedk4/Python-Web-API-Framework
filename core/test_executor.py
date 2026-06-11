@@ -30,6 +30,10 @@ class TestResult:
     test_data: Dict[str, Any] = field(default_factory=dict)
     response_body: str = ""
     error: str = ""
+    # Response validation fields
+    response_validation_enabled: bool = False
+    response_validation_passed: bool = True
+    validation_errors: List[str] = field(default_factory=list)
 
 
 class TestExecutor:
@@ -97,9 +101,11 @@ class TestExecutor:
         # Build headers
         headers = self._parse_headers(test_data.get('headers', ''))
 
-        # Add API key if not present
-        if self.config.get('API_KEY') and 'API-KEY' not in headers:
-            headers['API-KEY'] = self.config['API_KEY']
+        # Add API key from global config if present and not explicitly overridden
+        # Treat empty or whitespace-only API_KEY as "no key configured".
+        api_key = (self.config.get('API_KEY') or '').strip()
+        if api_key and 'API-KEY' not in headers:
+            headers['API-KEY'] = api_key
 
         # Add correlation ID
         if self.config.get('CORRELATION_ID') and 'Correlation-ID' not in headers:
@@ -115,6 +121,9 @@ class TestExecutor:
         method = test_data.get('method', default_method).upper()
         expected_status = int(test_data.get('expected_status', 200))
         timeout = int(self.config.get('TIMEOUT', 30))
+
+        # Get expected response for validation (optional)
+        expected_response = test_data.get('expected_response', '')
 
         # Execute request
         start_time = time.time()
@@ -133,7 +142,26 @@ class TestExecutor:
             response_time = time.time() - start_time
             status_code = response.status_code
             response_size = len(response.content)
-            passed = (status_code == expected_status)
+
+            # Capture response body for ALL tests (both pass and fail) for report visibility
+            response_body = response.text[:2000] if response.text else ""
+
+            # Step 1: Validate HTTP status code
+            status_passed = (status_code == expected_status)
+
+            # Step 2: Validate response content (if expected_response is provided)
+            response_validation_enabled = False
+            response_validation_passed = True
+            validation_errors = []
+
+            if expected_response:
+                response_validation_enabled = True
+                response_validation_passed, validation_errors = self._validate_response(
+                    response.text, expected_response
+                )
+
+            # Overall pass/fail: Both status AND response validation must pass
+            passed = status_passed and response_validation_passed
 
             # Save PDF if applicable
             pdf_path = None
@@ -142,11 +170,20 @@ class TestExecutor:
 
             # Capture error details for failed tests
             error_message = ""
-            response_preview = ""
             if not passed:
-                # Increased from 500 to 1000
-                response_preview = response.text[:1000]
-                error_message = f"HTTP {status_code}: {response.text[:200]}"
+                if not status_passed:
+                    error_message = f"HTTP {status_code}: {response.text[:500]}"
+                elif not response_validation_passed:
+                    error_message = f"Response validation failed: {'; '.join(validation_errors)}"
+
+            # Build result message
+            message_parts = [
+                f"Status: {status_code} (Expected: {expected_status})"]
+            if response_validation_enabled:
+                validation_status = "✓ PASS" if response_validation_passed else "✗ FAIL"
+                message_parts.append(
+                    f"Response Validation: {validation_status}")
+            message = " | ".join(message_parts)
 
             return TestResult(
                 test_name=test_name,
@@ -155,10 +192,13 @@ class TestExecutor:
                 expected_status=expected_status,
                 response_time=round(response_time, 2),
                 response_size=response_size,
-                message=f"Status: {status_code} (Expected: {expected_status})",
+                message=message,
                 test_data=test_data,
-                response_body=response_preview,
-                error=error_message
+                response_body=response_body,
+                error=error_message,
+                response_validation_enabled=response_validation_enabled,
+                response_validation_passed=response_validation_passed,
+                validation_errors=validation_errors
             )
 
         except requests.exceptions.Timeout:
@@ -196,6 +236,16 @@ class TestExecutor:
         if isinstance(headers_string, dict):
             return headers_string
 
+        # Try to parse as JSON first (for headers like '{"Content-Type": "application/json"}')
+        if isinstance(headers_string, str) and headers_string.strip().startswith('{'):
+            try:
+                parsed = json.loads(headers_string)
+                if isinstance(parsed, dict):
+                    headers.update(parsed)
+                    return headers
+            except json.JSONDecodeError:
+                pass  # Fall through to regular parsing
+
         # Support both semicolon and comma separators
         separator = ';' if ';' in headers_string else ','
 
@@ -216,7 +266,9 @@ class TestExecutor:
 
     def _prepare_body(self, body: Any) -> str:
         """Prepare request body"""
-        if not body:
+        # Only treat None or empty string as "no body"
+        # Empty dict {} and empty list [] are still valid JSON structures
+        if body is None or body == "":
             return ""
 
         if isinstance(body, str):
@@ -225,13 +277,116 @@ class TestExecutor:
             return body
 
         if isinstance(body, dict):
-            # Wrap single object in array for API compatibility
-            return json.dumps([body], indent=2)
+            # Serialize dict as-is (do not wrap in array)
+            # This includes empty dict {} which becomes "{}"
+            return json.dumps(body, indent=2)
 
         if isinstance(body, list):
+            # This includes empty list [] which becomes "[]"
             return json.dumps(body, indent=2)
 
         return str(body)
+
+    def _validate_response(self, actual_response_text: str, expected_response_str: str) -> tuple[bool, List[str]]:
+        """
+        Validate actual response against expected response
+
+        Universal multi-team validation strategy:
+        - Supports multiple field naming conventions across different teams/APIs
+        - Auto-detects common status and message field patterns
+        - Partial match for message fields (flexible)
+        - Backward compatible (optional validation)
+
+        Returns:
+            tuple: (validation_passed, list_of_validation_errors)
+        """
+        validation_errors = []
+
+        # If no expected response provided, skip validation (backward compatible)
+        if not expected_response_str or expected_response_str.strip() == "":
+            return True, []
+
+        try:
+            # Parse expected response
+            expected = json.loads(expected_response_str)
+        except json.JSONDecodeError as e:
+            validation_errors.append(
+                f"Invalid expected_response JSON format: {str(e)}")
+            return False, validation_errors
+
+        try:
+            # Parse actual response
+            actual = json.loads(actual_response_text)
+        except json.JSONDecodeError:
+            validation_errors.append("Actual response is not valid JSON")
+            return False, validation_errors
+
+        # Common field names used across different APIs/teams
+        # Ordered by priority (most common first)
+        STATUS_FIELDS = [
+            'OUTSTATUS',      # Ashley Furniture standard
+            'status',         # Generic REST API
+            'statusCode',     # Common alternative
+            'code',           # Short form
+            'result',         # Result-based APIs
+            'state',          # State-based APIs
+            'outcome',        # Outcome-based APIs
+            'success'         # Boolean success indicator
+        ]
+
+        MESSAGE_FIELDS = [
+            'OUTMESSAGE',     # Ashley Furniture standard
+            'OREASON',        # Ashley Furniture RA/reason variant
+            'message',        # Generic REST API
+            'errorMessage',   # Error-specific
+            'error',          # Simple error field
+            'description',    # Descriptive field
+            'detail',         # Detail field
+            'reason',         # Reason field
+            'msg',            # Abbreviated message
+            'text',           # Generic text
+            'info'            # Information field
+        ]
+
+        # 1. Validate STATUS field (smart detection)
+        status_field_found = None
+        for field_name in STATUS_FIELDS:
+            if field_name in expected:
+                status_field_found = field_name
+                expected_status = expected.get(field_name)
+                actual_status = actual.get(field_name)
+
+                # Handle both string and boolean status values
+                if actual_status != expected_status:
+                    validation_errors.append(
+                        f"{field_name} mismatch: expected '{expected_status}', got '{actual_status}'"
+                    )
+                break  # Only validate first matching status field
+
+        # 2. Validate MESSAGE field (smart detection with partial match)
+        message_field_found = None
+        for field_name in MESSAGE_FIELDS:
+            if field_name in expected:
+                message_field_found = field_name
+                expected_message = expected.get(field_name, '')
+                actual_message = actual.get(field_name, '')
+
+                # Convert to string for comparison (handles non-string types)
+                expected_message_str = str(
+                    expected_message) if expected_message else ''
+                actual_message_str = str(
+                    actual_message) if actual_message else ''
+
+                # Partial match: actual should contain expected
+                if expected_message_str and expected_message_str not in actual_message_str:
+                    validation_errors.append(
+                        f"{field_name} mismatch: expected containing '{expected_message_str}', got '{actual_message_str}'"
+                    )
+                break  # Only validate first matching message field
+
+        # Validation passes if no errors
+        validation_passed = len(validation_errors) == 0
+        return validation_passed, validation_errors
 
     def _save_pdf(self, content: bytes, test_name: str) -> str:
         """Save PDF file"""
@@ -283,7 +438,8 @@ class TestExecutor:
                 'response_size': r.response_size,
                 'message': r.message,
                 'timestamp': r.timestamp,
-                'error': r.error
+                'error': r.error,
+                'response_body': r.response_body
             }
             for r in self.results
         ]

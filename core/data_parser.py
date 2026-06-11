@@ -12,19 +12,20 @@ from pathlib import Path
 
 class DataParser:
     """Parses test data from CSV and JSON files"""
-    
+
     def __init__(self, test_data_dir: str = "Test_Data"):
         self.test_data_dir = test_data_dir
-        self.supported_encodings = ['utf-8', 'utf-8-sig', 'cp1252', 'latin-1', 'iso-8859-1']
-    
+        self.supported_encodings = [
+            'utf-8', 'utf-8-sig', 'cp1252', 'latin-1', 'iso-8859-1']
+
     def get_test_files(self) -> List[Dict[str, Any]]:
         """Get list of available test data files with metadata"""
         files = []
         test_data_path = Path(self.test_data_dir)
-        
+
         if not test_data_path.exists():
             return files
-        
+
         for file_path in test_data_path.glob('*'):
             if file_path.suffix.lower() in ['.csv', '.json']:
                 try:
@@ -40,9 +41,9 @@ class DataParser:
                     files.append(file_info)
                 except Exception as e:
                     print(f"Error reading {file_path.name}: {e}")
-        
+
         return sorted(files, key=lambda x: x['name'])
-    
+
     def _count_tests(self, file_path: Path) -> int:
         """Count number of tests in file"""
         try:
@@ -59,7 +60,7 @@ class DataParser:
         except:
             pass
         return 0
-    
+
     def _get_test_descriptions(self, file_path: Path, max_count: int = 3) -> List[str]:
         """Get first few test descriptions"""
         descriptions = []
@@ -71,10 +72,10 @@ class DataParser:
                     for i, row in enumerate(reader):
                         if i >= max_count:
                             break
-                        desc = (row.get('testDescription') or 
-                               row.get('test_name') or 
-                               row.get('description') or 
-                               f"Test {i+1}")
+                        desc = (row.get('testDescription') or
+                                row.get('test_name') or
+                                row.get('description') or
+                                f"Test {i+1}")
                         descriptions.append(desc)
             elif file_path.suffix.lower() == '.json':
                 content = self._read_file_with_encoding(file_path)
@@ -82,15 +83,15 @@ class DataParser:
                     data = json.loads(content)
                     if isinstance(data, list):
                         for i, item in enumerate(data[:max_count]):
-                            desc = (item.get('testDescription') or 
-                                   item.get('test_name') or 
-                                   item.get('description') or 
-                                   f"Test {i+1}")
+                            desc = (item.get('testDescription') or
+                                    item.get('test_name') or
+                                    item.get('description') or
+                                    f"Test {i+1}")
                             descriptions.append(desc)
         except:
             pass
         return descriptions
-    
+
     def _read_file_with_encoding(self, file_path: Path) -> Optional[str]:
         """Read file with multiple encoding attempts"""
         for encoding in self.supported_encodings:
@@ -100,17 +101,18 @@ class DataParser:
             except (UnicodeDecodeError, UnicodeError):
                 continue
         return None
-    
+
     def parse_csv(self, file_path: str) -> List[Dict[str, Any]]:
         """Parse CSV file and return test data"""
         test_data = []
         content = self._read_file_with_encoding(Path(file_path))
-        
+
         if not content:
-            raise ValueError(f"Could not read file with any supported encoding")
-        
+            raise ValueError(
+                f"Could not read file with any supported encoding")
+
         reader = csv.DictReader(content.splitlines())
-        
+
         for row in reader:
             # Check if this is legacy or dynamic format
             if 'method' in row and 'base_url' in row:
@@ -119,7 +121,7 @@ class DataParser:
             else:
                 # Legacy format
                 test_data.append(self._parse_legacy_row(row))
-        
+
         return test_data
 
     def _parse_dynamic_row(self, row: Dict[str, str]) -> Dict[str, Any]:
@@ -132,6 +134,7 @@ class DataParser:
             'body': self._parse_body(row.get('body', '')),
             'headers': row.get('headers', ''),
             'expected_status': row.get('expected_status', '200'),
+            'expected_response': row.get('expected_response', ''),
             'description': row.get('description', ''),
             'api_key': row.get('api_key', '')
         }
@@ -181,7 +184,8 @@ class DataParser:
         content = self._read_file_with_encoding(Path(file_path))
 
         if not content:
-            raise ValueError(f"Could not read file with any supported encoding")
+            raise ValueError(
+                f"Could not read file with any supported encoding")
 
         data = json.loads(content)
 

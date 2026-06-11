@@ -44,14 +44,14 @@
                     <div class="mb-3">
                         <label for="api_key" class="form-label">API Key</label>
                         <input type="password" class="form-control" id="api_key" name="api_key"
-                            value="{{ config.get('API_KEY', '') }}" required>
-                        <div class="form-text">Your API authentication key</div>
+                            value="{{ config.get('API_KEY', '') }}">
+                        <div class="form-text">Your API authentication key (leave blank for public/no-auth APIs)</div>
                     </div>
 
                     <div class="mb-3">
                         <label for="correlation_id" class="form-label">Correlation ID</label>
                         <input type="text" class="form-control" id="correlation_id" name="correlation_id"
-                            value="{{ config.get('CORRELATION_ID', 'test') }}">
+                            value="{{ config.get('CORRELATION_ID', '') }}">
                         <div class="form-text">Used for request tracking</div>
                     </div>
 
@@ -59,13 +59,13 @@
                         <div class="col-md-6 mb-3">
                             <label for="timeout" class="form-label">Timeout (seconds)</label>
                             <input type="number" class="form-control" id="timeout" name="timeout"
-                                value="{{ config.get('TIMEOUT', '30') }}" min="1" max="300">
+                                value="{{ config.get('TIMEOUT', '') }}" min="1" max="300">
                         </div>
 
                         <div class="col-md-6 mb-3">
                             <label for="max_response_time" class="form-label">Max Response Time (ms)</label>
                             <input type="number" class="form-control" id="max_response_time" name="max_response_time"
-                                value="{{ config.get('MAX_RESPONSE_TIME', '5000') }}" min="100">
+                                value="{{ config.get('MAX_RESPONSE_TIME', '') }}" min="100">
                         </div>
                     </div>
 

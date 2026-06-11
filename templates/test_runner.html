@@ -69,14 +69,19 @@
                         <h5><i class="bi bi-info-circle"></i> Current Configuration</h5>
                     </div>
                     <div class="card-body">
-                        <p><strong>API URL:</strong><br>{{ config.get('API_BASE_URL', 'Not configured') }}</p>
-                        <p><strong>Endpoint:</strong><br>{{ config.get('API_ENDPOINT', 'Not configured') }}</p>
-                        <p><strong>Timeout:</strong> {{ config.get('TIMEOUT', '30') }}s</p>
-                        {% if not config.get('API_BASE_URL') %}
-                        <div class="alert alert-warning">
+                        <p><strong>API URL:</strong><br>
+                            <span id="currentApiUrl">{{ config.get('API_BASE_URL', 'Not configured') }}</span>
+                        </p>
+                        <p><strong>Endpoint:</strong><br>
+                            <span id="currentEndpoint">{{ config.get('API_ENDPOINT', 'Not configured') }}</span>
+                        </p>
+                        <p><strong>Timeout:</strong>
+                            <span id="currentTimeout">{{ config.get('TIMEOUT', 'Not configured') }}s</span>
+                        </p>
+                        <div id="configWarning" class="alert alert-warning" {% if config.get('API_BASE_URL') %}
+                            style="display: none;" {% endif %}>
                             <i class="bi bi-exclamation-triangle"></i> Please configure API settings first
                         </div>
-                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -166,7 +171,7 @@
 <script>
     const socket = io();
 
-    function startTests() {
+    async function startTests() {
         const testFile = document.getElementById('testFile').value;
         const language = document.getElementById('language').value;
 
@@ -180,6 +185,35 @@
         document.getElementById('progressSection').style.display = 'block';
         document.getElementById('resultsSection').style.display = 'none';
         document.getElementById('testLog').innerHTML = '<div class="text-info">Starting tests...</div>';
+
+        // Load and display the current configuration only when tests start
+        try {
+            if (window.api && typeof api.getConfig === 'function') {
+                const cfg = await api.getConfig();
+                if (cfg) {
+                    const apiUrlEl = document.getElementById('currentApiUrl');
+                    const endpointEl = document.getElementById('currentEndpoint');
+                    const timeoutEl = document.getElementById('currentTimeout');
+                    const warningEl = document.getElementById('configWarning');
+
+                    if (apiUrlEl) {
+                        apiUrlEl.textContent = cfg.API_BASE_URL || 'Not configured';
+                    }
+                    if (endpointEl) {
+                        endpointEl.textContent = cfg.API_ENDPOINT || 'Not configured';
+                    }
+                    if (timeoutEl) {
+                        timeoutEl.textContent = cfg.TIMEOUT ? `${cfg.TIMEOUT}s` : 'Not configured';
+                    }
+                    if (warningEl) {
+                        const hasBaseUrl = !!cfg.API_BASE_URL;
+                        warningEl.style.display = hasBaseUrl ? 'none' : 'block';
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('Error loading current configuration:', err);
+        }
 
         socket.emit('start_tests', { test_file: testFile, language: language });
     }

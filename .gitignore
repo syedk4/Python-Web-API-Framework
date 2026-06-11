@@ -58,3 +58,11 @@ debug_*.py
 # OS
 .DS_Store
 Thumbs.db
+# Ignore all test data
+Test_Data/
+
+# But keep templates
+!Test_Data/.gitkeep
+!Test_Data/README.md
+!Test_Data/template.csv
+!Test_Data/sample-test.csv

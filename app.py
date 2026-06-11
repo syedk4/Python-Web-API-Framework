@@ -85,17 +85,22 @@ def configure():
         else:
             return jsonify({'success': False, 'message': 'Failed to save configuration'}), 500
 
-    # GET request - show configuration form
-    config = config_manager.load_config()
-    return render_template('configure.html', config=config)
+    # GET request - show configuration form with empty fields
+    # Do not pre-populate values from stored configuration to avoid
+    # exposing previously used endpoints, keys, or IDs in the UI.
+    empty_config = {}
+    return render_template('configure.html', config=empty_config)
 
 
 @app.route('/test-runner')
 def test_runner():
     """Test execution page"""
     test_files = data_parser.get_test_files()
-    config = config_manager.load_config()
-    return render_template('test_runner.html', test_files=test_files, config=config)
+    # Do not preload configuration into the UI; the Run Tests page
+    # will fetch and display the current config only after the user
+    # explicitly starts a test run.
+    empty_config = {}
+    return render_template('test_runner.html', test_files=test_files, config=empty_config)
 
 
 @app.route('/results')
@@ -285,6 +290,7 @@ def api_save_scenarios():
         scenarios = data.get('scenarios', [])
         filename = data.get('filename', 'generated-scenarios.csv')
         file_format = data.get('format', 'csv')
+        save_location = data.get('save_location') or 'Test_Data'
 
         if not scenarios:
             return jsonify({
@@ -293,11 +299,21 @@ def api_save_scenarios():
             }), 400
 
         # Ensure filename has correct extension
+        filename = secure_filename(filename)
         if not filename.endswith(f'.{file_format}'):
             filename = f"{filename}.{file_format}"
 
-        # Save to Test_Data folder
-        filepath = os.path.join('Test_Data', filename)
+        # Resolve and create target directory
+        base_dir = save_location.strip() or 'Test_Data'
+        base_dir = os.path.expanduser(base_dir)
+        if not os.path.isabs(base_dir):
+            base_dir = os.path.join(os.getcwd(), base_dir)
+        base_dir = os.path.normpath(base_dir)
+
+        os.makedirs(base_dir, exist_ok=True)
+
+        # Final file path
+        filepath = os.path.join(base_dir, filename)
 
         if file_format == 'csv':
             # Convert to CSV

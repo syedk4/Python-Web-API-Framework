@@ -277,11 +277,16 @@ API Details (optional):
                     </div>
 
                     <div class="mb-3">
-                        <label for="saveLocation" class="form-label fw-bold">
+                        <label class="form-label fw-bold">
                             Save Location
                         </label>
-                        <input type="text" class="form-control" id="saveLocation" value="Test_Data" readonly>
-                        <div class="form-text">Files will be saved to the Test_Data folder</div>
+                        <p class="form-control-plaintext mb-0">
+                            The file will be downloaded to your computer.
+                        </p>
+                        <div class="form-text">
+                            Your browser will ask where to save it (or use your default Downloads folder).
+                            A copy will also be saved in this project's <code>Test_Data</code> folder.
+                        </div>
                     </div>
 
                     <div class="alert alert-warning">
@@ -563,12 +568,17 @@ API Details (optional):
         modal.show();
     }
 
-    function confirmSaveScenarios() {
+    async function confirmSaveScenarios() {
         const filename = document.getElementById('saveFilename').value.trim();
         const format = document.getElementById('saveFormat').value;
 
         if (!filename) {
             alert('Please enter a filename');
+            return;
+        }
+
+        if (generatedScenarios.length === 0) {
+            alert('No scenarios to save. Please generate scenarios first.');
             return;
         }
 
@@ -578,8 +588,40 @@ API Details (optional):
             modal.hide();
         }
 
-        // Call save API
-        fetch('/api/save-scenarios', {
+        // Fire both actions for Option B:
+        // 1) Save to server (project folder)
+        // 2) Download to user's computer
+        const [serverResult, finalFilename] = await Promise.all([
+            saveScenariosToServer(filename, format).catch(err => ({ success: false, error: err.message || String(err) })),
+            Promise.resolve(downloadGeneratedScenarios(filename, format))
+        ]);
+
+        let message = '';
+        if (finalFilename) {
+            message += `Scenarios downloaded as <strong>${finalFilename}</strong><br>`;
+        }
+
+        if (serverResult && serverResult.success) {
+            const locationText = serverResult.filepath || 'project folder';
+            message += `A copy was also saved on the server at <code>${locationText}</code><br>`;
+        } else {
+            // If server save failed, still inform the user but keep the download success
+            if (serverResult && serverResult.error) {
+                console.error('Error saving scenarios on server:', serverResult.error);
+                message += `<span class="text-danger">(Server save failed: ${serverResult.error})</span><br>`;
+            }
+        }
+
+        if (finalFilename) {
+            message += `Total scenarios: <strong>${generatedScenarios.length}</strong>`;
+            document.getElementById('successMessage').innerHTML = message;
+            document.getElementById('successSection').style.display = 'block';
+            document.getElementById('successSection').scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+
+    async function saveScenariosToServer(filename, format) {
+        const response = await fetch('/api/save-scenarios', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -588,25 +630,67 @@ API Details (optional):
                 scenarios: generatedScenarios,
                 filename: filename,
                 format: format
+                // No save_location here: backend defaults to Test_Data and supports
+                // more advanced configuration without exposing server paths to the UI.
             })
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    document.getElementById('successMessage').innerHTML = `
-                Scenarios saved successfully to <strong>${data.filename}</strong><br>
-                Location: <code>${data.filepath}</code><br>
-                Total scenarios: <strong>${generatedScenarios.length}</strong>
-            `;
-                    document.getElementById('successSection').style.display = 'block';
-                    document.getElementById('successSection').scrollIntoView({ behavior: 'smooth' });
-                } else {
-                    alert('Error saving scenarios: ' + data.error);
+        });
+
+        const data = await response.json();
+        return data;
+    }
+
+    function downloadGeneratedScenarios(filename, format) {
+        // Ensure correct extension
+        let finalFilename = filename;
+        const expectedExt = format === 'json' ? '.json' : '.csv';
+        if (!finalFilename.toLowerCase().endsWith(expectedExt)) {
+            finalFilename += expectedExt;
+        }
+
+        let blob;
+        if (format === 'json') {
+            const jsonContent = JSON.stringify(generatedScenarios, null, 2);
+            blob = new Blob([jsonContent], { type: 'application/json;charset=utf-8;' });
+        } else {
+            // CSV
+            if (!generatedScenarios.length) {
+                return null;
+            }
+
+            const headers = Object.keys(generatedScenarios[0] || {});
+            const escapeCsv = (value) => {
+                if (value === null || value === undefined) return '';
+                const str = String(value);
+                if (/[",\r\n]/.test(str)) {
+                    return '"' + str.replace(/"/g, '""') + '"';
                 }
-            })
-            .catch(error => {
-                alert('Error saving scenarios: ' + error);
+                return str;
+            };
+
+            const lines = [];
+            lines.push(headers.join(','));
+            generatedScenarios.forEach(row => {
+                const values = headers.map(h => escapeCsv(row[h]));
+                lines.push(values.join(','));
             });
+
+            const csvContent = lines.join('\r\n');
+            blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        }
+
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = finalFilename;
+        document.body.appendChild(a);
+        a.click();
+
+        setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 0);
+
+        return finalFilename;
     }
 </script>
 {% endblock %}

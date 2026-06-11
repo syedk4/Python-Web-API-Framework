@@ -27,19 +27,69 @@ class ReportGenerator:
             status_class = "status-pass" if result['passed'] else "status-fail"
             status_text = "PASS" if result['passed'] else "FAIL"
             error_msg = result.get('error', '')
-            error_display = f'<span class="error-msg" title="{error_msg}">{error_msg[:100]}...</span>' if error_msg else '-'
+            response_body = result.get('response_body', '')
+
+            # Response validation fields
+            response_validation_enabled = result.get(
+                'response_validation_enabled', False)
+            response_validation_passed = result.get(
+                'response_validation_passed', True)
+            validation_errors = result.get('validation_errors', [])
+
+            # Escape HTML in response/error for safe display
+            import html
+            error_escaped = html.escape(error_msg) if error_msg else ''
+            response_escaped = html.escape(
+                response_body) if response_body else ''
+
+            # Show truncated error with tooltip, full error in expandable section
+            if error_msg:
+                error_preview = error_msg[:80] + \
+                    '...' if len(error_msg) > 80 else error_msg
+                error_display = f'<span class="error-preview" title="{error_escaped}">{html.escape(error_preview)}</span>'
+            else:
+                error_display = '<span class="no-error">-</span>'
+
+            # Response validation indicator
+            if response_validation_enabled:
+                validation_class = "validation-pass" if response_validation_passed else "validation-fail"
+                validation_icon = "✓" if response_validation_passed else "✗"
+                validation_display = f'<span class="{validation_class}" title="Response validation: {validation_icon}">{validation_icon}</span>'
+            else:
+                validation_display = '<span class="validation-na" title="No validation">-</span>'
 
             results_html += f"""
-            <tr>
+            <tr class="result-row" onclick="toggleDetails({i})">
                 <td>{i}</td>
                 <td>{result['test_name']}</td>
                 <td class="{status_class}">{status_text}</td>
                 <td>{result['status_code']}</td>
                 <td>{result['expected_status']}</td>
+                <td class="validation-cell">{validation_display}</td>
                 <td>{result['response_time']}s</td>
                 <td>{self._format_size(result['response_size'])}</td>
                 <td>{result['timestamp']}</td>
                 <td class="error-cell">{error_display}</td>
+            </tr>
+            <tr id="details-{i}" class="details-row" style="display: none;">
+                <td colspan="10">
+                    <div class="details-content">
+                        <div class="detail-section">
+                            <h4>Response Body:</h4>
+                            <pre class="response-body">{response_escaped if response_escaped else '(empty)'}</pre>
+                        </div>
+                        {f'''<div class="detail-section validation-section">
+                            <h4>Response Validation {'✓ PASSED' if response_validation_passed else '✗ FAILED'}:</h4>
+                            <ul class="validation-errors">
+                                {''.join(f'<li>{html.escape(error)}</li>' for error in validation_errors) if validation_errors else '<li class="validation-success">All validation checks passed</li>'}
+                            </ul>
+                        </div>''' if response_validation_enabled else ''}
+                        {f'''<div class="detail-section error-section">
+                            <h4>Error Details:</h4>
+                            <pre class="error-details">{error_escaped}</pre>
+                        </div>''' if error_msg else ''}
+                    </div>
+                </td>
             </tr>
             """
 
@@ -51,7 +101,7 @@ class ReportGenerator:
     <title>API Test Report - {timestamp}</title>
     <style>
         body {{ font-family: Arial, sans-serif; margin: 20px; background: #f5f5f5; }}
-        .container {{ max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
+        .container {{ max-width: 1400px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
         .header {{ text-align: center; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; border-radius: 10px; margin-bottom: 30px; }}
         .summary {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }}
         .summary-card {{ background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; border-left: 4px solid #007bff; }}
@@ -63,14 +113,44 @@ class ReportGenerator:
         .pass-rate {{ color: #17a2b8; border-left-color: #17a2b8; }}
         table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
         th, td {{ padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }}
-        th {{ background: #007bff; color: white; position: sticky; top: 0; }}
-        tr:nth-child(even) {{ background: #f8f9fa; }}
+        th {{ background: #007bff; color: white; position: sticky; top: 0; z-index: 10; }}
+        .result-row {{ cursor: pointer; transition: background-color 0.2s; }}
+        .result-row:hover {{ background: #e3f2fd !important; }}
+        .result-row:nth-child(4n+1) {{ background: #f8f9fa; }}
         .status-pass {{ color: #28a745; font-weight: bold; }}
         .status-fail {{ color: #dc3545; font-weight: bold; }}
-        .error-cell {{ font-size: 0.9em; color: #666; max-width: 300px; overflow: hidden; text-overflow: ellipsis; }}
-        .error-msg {{ cursor: help; }}
+        .error-cell {{ font-size: 0.9em; color: #666; max-width: 300px; }}
+        .error-preview {{ color: #d32f2f; font-weight: 500; cursor: help; }}
+        .no-error {{ color: #999; }}
+        .details-row {{ background: #f0f7ff !important; }}
+        .details-content {{ padding: 20px; }}
+        .detail-section {{ margin-bottom: 20px; }}
+        .detail-section h4 {{ margin: 0 0 10px 0; color: #333; font-size: 14px; text-transform: uppercase; border-bottom: 2px solid #007bff; padding-bottom: 5px; }}
+        .detail-section pre {{ background: #263238; color: #aed581; padding: 15px; border-radius: 5px; overflow-x: auto; font-size: 13px; line-height: 1.5; margin: 0; white-space: pre-wrap; word-wrap: break-word; }}
+        .error-section h4 {{ border-bottom-color: #dc3545; }}
+        .error-section pre {{ background: #ffebee; color: #c62828; border-left: 4px solid #dc3545; }}
+        .validation-section h4 {{ border-bottom-color: #007bff; }}
+        .validation-section ul {{ margin: 0; padding-left: 20px; }}
+        .validation-section li {{ padding: 5px 0; }}
+        .validation-errors li {{ color: #c62828; }}
+        .validation-success {{ color: #28a745; font-style: italic; }}
+        .validation-cell {{ text-align: center; font-size: 1.2em; }}
+        .validation-pass {{ color: #28a745; font-weight: bold; }}
+        .validation-fail {{ color: #dc3545; font-weight: bold; }}
+        .validation-na {{ color: #999; }}
         .footer {{ text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; }}
+        .expand-hint {{ font-size: 0.85em; color: #999; font-style: italic; margin-top: 10px; text-align: center; }}
     </style>
+    <script>
+        function toggleDetails(rowNum) {{
+            const detailsRow = document.getElementById('details-' + rowNum);
+            if (detailsRow.style.display === 'none') {{
+                detailsRow.style.display = 'table-row';
+            }} else {{
+                detailsRow.style.display = 'none';
+            }}
+        }}
+    </script>
 </head>
 <body>
     <div class="container">
@@ -99,6 +179,7 @@ class ReportGenerator:
         </div>
         
         <h2>Test Results</h2>
+        <p class="expand-hint">💡 Click any row to view full response body, validation details, and errors</p>
         <table>
             <thead>
                 <tr>
@@ -107,6 +188,7 @@ class ReportGenerator:
                     <th>Status</th>
                     <th>Actual</th>
                     <th>Expected</th>
+                    <th>Validation</th>
                     <th>Time</th>
                     <th>Size</th>
                     <th>Timestamp</th>
