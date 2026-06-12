@@ -223,6 +223,12 @@
         document.getElementById('stopBtn').disabled = true;
     }
 
+    // Remove any existing listeners to prevent duplicates
+    socket.off('test_progress');
+    socket.off('tests_complete');
+    socket.off('test_error');
+    socket.off('tests_stopped');
+
     socket.on('test_progress', (data) => {
         const percent = Math.round((data.current / data.total) * 100);
         document.getElementById('progressBar').style.width = percent + '%';

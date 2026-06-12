@@ -481,8 +481,26 @@ class TestExecutor:
             # Custom Validator: Date Range
             elif validator_type == 'date_range':
                 from datetime import datetime as dt
-                from_date_str = test_data.get('fromDate', '')
-                to_date_str = test_data.get('toDate', '')
+
+                # Extract fromDate and toDate from request body JSON
+                from_date_str = ''
+                to_date_str = ''
+
+                # Try to parse from body field in test_data
+                body_str = test_data.get('body', '')
+                if body_str:
+                    try:
+                        body_json = json.loads(body_str)
+                        from_date_str = body_json.get('fromDate', '')
+                        to_date_str = body_json.get('toDate', '')
+                    except (json.JSONDecodeError, AttributeError):
+                        # If body parsing fails, try direct test_data fields
+                        from_date_str = test_data.get('fromDate', '')
+                        to_date_str = test_data.get('toDate', '')
+                else:
+                    # Fallback: check if dates are direct columns in CSV
+                    from_date_str = test_data.get('fromDate', '')
+                    to_date_str = test_data.get('toDate', '')
 
                 if from_date_str and to_date_str:
                     from_date = dt.fromisoformat(from_date_str)
@@ -498,6 +516,10 @@ class TestExecutor:
                                 errors.append(
                                     f"Invoice[{idx}] date '{invoice_date_str}' is outside range {from_date_str} to {to_date_str}"
                                 )
+                else:
+                    errors.append(
+                        "date_range validator: fromDate and toDate not found in request body or test data"
+                    )
 
             # Custom Validator: Amount Calculation
             elif validator_type == 'amount_calculation':

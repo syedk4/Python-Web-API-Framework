@@ -127,6 +127,7 @@ class DataParser:
     def _parse_dynamic_row(self, row: Dict[str, str]) -> Dict[str, Any]:
         """Parse dynamic format CSV row"""
         return {
+            'test_id': row.get('test_id', ''),
             'test_name': row.get('test_name', ''),
             'method': row.get('method', 'POST'),
             'base_url': row.get('base_url', ''),
@@ -135,6 +136,8 @@ class DataParser:
             'headers': row.get('headers', ''),
             'expected_status': row.get('expected_status', '200'),
             'expected_response': row.get('expected_response', ''),
+            'expected_response_schema': row.get('expected_response_schema', ''),
+            'custom_validator': row.get('custom_validator', ''),
             'description': row.get('description', ''),
             'api_key': row.get('api_key', '')
         }
