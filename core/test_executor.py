@@ -3,6 +3,7 @@ Test Executor Module
 Handles API test execution, HTTP requests, and result tracking
 """
 
+from core.schema_validator import SchemaValidator
 import requests
 import json
 import time
@@ -10,9 +11,12 @@ import urllib3
 from datetime import datetime
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
+from pathlib import Path
 
 # Disable SSL warnings
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+# Import SchemaValidator for advanced validation
 
 
 @dataclass
@@ -48,6 +52,8 @@ class TestExecutor:
         self.current_test = 0
         self.is_running = False
         self.should_stop = False
+        # Initialize schema validator for advanced validation
+        self.schema_validator = SchemaValidator()
 
     def execute_tests(self, test_data_list: List[Dict[str, Any]],
                       progress_callback=None) -> List[TestResult]:
@@ -156,8 +162,9 @@ class TestExecutor:
 
             if expected_response:
                 response_validation_enabled = True
+                # Check if expected_response is a schema path or actual response
                 response_validation_passed, validation_errors = self._validate_response(
-                    response.text, expected_response
+                    response.text, expected_response, test_data
                 )
 
             # Overall pass/fail: Both status AND response validation must pass
@@ -287,9 +294,23 @@ class TestExecutor:
 
         return str(body)
 
-    def _validate_response(self, actual_response_text: str, expected_response_str: str) -> tuple[bool, List[str]]:
+    def _validate_response(
+        self,
+        actual_response_text: str,
+        expected_response_str: str,
+        test_data: Dict[str, Any] = None
+    ) -> tuple[bool, List[str]]:
         """
         Validate actual response against expected response
+
+        HYBRID VALIDATION APPROACH (FA-739 Enhancement):
+        1. Schema-based validation (for dynamic/unpredictable data)
+        2. Custom validators (for business rules like PO suffix)
+        3. Exact match validation (for static/legacy tests - backward compatible)
+
+        Priority order:
+        - If schema path found in test_data -> use schema validation
+        - Else use legacy exact match validation
 
         Universal multi-team validation strategy:
         - Supports multiple field naming conventions across different teams/APIs
@@ -305,6 +326,40 @@ class TestExecutor:
         # If no expected response provided, skip validation (backward compatible)
         if not expected_response_str or expected_response_str.strip() == "":
             return True, []
+
+        # HYBRID APPROACH: Check if test_data has schema_path
+        if test_data:
+            schema_path = test_data.get('expected_response_schema', '').strip()
+
+            # Option 1: Schema-based validation
+            if schema_path:
+                try:
+                    # Parse actual response
+                    actual_data = json.loads(actual_response_text)
+                except json.JSONDecodeError:
+                    return False, ["Actual response is not valid JSON"]
+
+                # Validate using schema
+                schema_valid, schema_errors = self.schema_validator.validate_from_file(
+                    actual_data, schema_path
+                )
+
+                if not schema_valid:
+                    return False, schema_errors
+
+                # Check for custom validators
+                custom_validator = test_data.get(
+                    'custom_validator', '').strip()
+                if custom_validator:
+                    custom_valid, custom_errors = self._apply_custom_validator(
+                        actual_data, custom_validator, test_data
+                    )
+                    if not custom_valid:
+                        return False, custom_errors
+
+                return True, []
+
+        # Option 2: Legacy exact-match validation (backward compatible)
 
         try:
             # Parse expected response
@@ -387,6 +442,85 @@ class TestExecutor:
         # Validation passes if no errors
         validation_passed = len(validation_errors) == 0
         return validation_passed, validation_errors
+
+    def _apply_custom_validator(
+        self,
+        response_data: Any,
+        validator_type: str,
+        test_data: Dict[str, Any]
+    ) -> tuple[bool, List[str]]:
+        """
+        Apply custom business logic validators
+
+        Supports FA-739 custom validators like:
+        - po_suffix_sh: Validates poNumber ends with --SH
+        - date_range: Validates dates fall within specified range
+        - amount_calculation: Validates financial calculations
+
+        Args:
+            response_data: Parsed JSON response
+            validator_type: Type of custom validator to apply
+            test_data: Original test data (may contain validator params)
+
+        Returns:
+            Tuple of (is_valid, list_of_errors)
+        """
+        errors = []
+
+        try:
+            # Custom Validator: PO Suffix --SH
+            if validator_type == 'po_suffix_sh':
+                invoices = response_data.get('invoices', [])
+                for idx, invoice in enumerate(invoices):
+                    po_number = invoice.get('poNumber', '')
+                    if not po_number.endswith('--SH'):
+                        errors.append(
+                            f"Invoice[{idx}] poNumber '{po_number}' does not end with --SH"
+                        )
+
+            # Custom Validator: Date Range
+            elif validator_type == 'date_range':
+                from datetime import datetime as dt
+                from_date_str = test_data.get('fromDate', '')
+                to_date_str = test_data.get('toDate', '')
+
+                if from_date_str and to_date_str:
+                    from_date = dt.fromisoformat(from_date_str)
+                    to_date = dt.fromisoformat(to_date_str)
+
+                    invoices = response_data.get('invoices', [])
+                    for idx, invoice in enumerate(invoices):
+                        invoice_date_str = invoice.get('invoiceDate', '')
+                        if invoice_date_str:
+                            invoice_date = dt.fromisoformat(
+                                invoice_date_str.split('T')[0])
+                            if not (from_date <= invoice_date <= to_date):
+                                errors.append(
+                                    f"Invoice[{idx}] date '{invoice_date_str}' is outside range {from_date_str} to {to_date_str}"
+                                )
+
+            # Custom Validator: Amount Calculation
+            elif validator_type == 'amount_calculation':
+                invoices = response_data.get('invoices', [])
+                for idx, invoice in enumerate(invoices):
+                    invoice_amount = float(invoice.get('invoiceAmount', 0))
+                    paid_amount = float(invoice.get('paidAmount', 0))
+                    open_amount = float(invoice.get('openAmount', 0))
+
+                    expected_total = paid_amount + open_amount
+                    # Allow small floating point differences
+                    if abs(invoice_amount - expected_total) > 0.01:
+                        errors.append(
+                            f"Invoice[{idx}] amount mismatch: {invoice_amount} != {paid_amount} + {open_amount}"
+                        )
+
+            else:
+                errors.append(f"Unknown custom validator: {validator_type}")
+
+            return (len(errors) == 0, errors)
+
+        except Exception as e:
+            return False, [f"Custom validator error: {str(e)}"]
 
     def _save_pdf(self, content: bytes, test_name: str) -> str:
         """Save PDF file"""

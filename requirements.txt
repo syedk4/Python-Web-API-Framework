@@ -9,3 +9,6 @@ Werkzeug==3.0.1
 # Phase 2: LLM Integration
 openai==1.12.0
 anthropic==0.18.1
+
+# Phase 4: Schema Validation (FA-739 Enhancement)
+jsonschema==4.21.1
