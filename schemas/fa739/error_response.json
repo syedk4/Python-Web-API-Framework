@@ -3,21 +3,68 @@
   "title": "FA-739 Error Response Schema",
   "description": "Validates error responses for validation failures, authentication errors, etc.",
   "type": "object",
-  "required": ["error"],
-  "properties": {
-    "error": {
-      "type": "string",
-      "description": "Error message describing what went wrong",
-      "minLength": 1
+  "oneOf": [
+    {
+      "description": "Standard ProblemDetails error format (RFC 7807)",
+      "required": ["title", "status"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "description": "URI reference identifying the problem type"
+        },
+        "title": {
+          "type": "string",
+          "description": "Short, human-readable summary of the problem",
+          "minLength": 1
+        },
+        "status": {
+          "type": ["integer", "string"],
+          "description": "HTTP status code"
+        },
+        "detail": {
+          "type": "string",
+          "description": "Human-readable explanation specific to this occurrence"
+        },
+        "instance": {
+          "type": "string",
+          "description": "URI reference identifying the specific occurrence"
+        },
+        "errors": {
+          "type": "object",
+          "description": "Validation errors keyed by field name",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "traceId": {
+          "type": "string",
+          "description": "Trace ID for debugging"
+        }
+      },
+      "additionalProperties": true
     },
-    "errorCode": {
-      "type": "string",
-      "description": "Optional error code for categorization"
-    },
-    "details": {
-      "type": "object",
-      "description": "Additional error details"
+    {
+      "description": "Simple error format with 'error' field",
+      "required": ["error"],
+      "properties": {
+        "error": {
+          "type": "string",
+          "description": "Error message describing what went wrong",
+          "minLength": 1
+        },
+        "errorCode": {
+          "type": "string",
+          "description": "Optional error code for categorization"
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional error details"
+        }
+      }
     }
-  }
+  ]
 }
 
