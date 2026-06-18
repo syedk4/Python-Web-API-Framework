@@ -5,7 +5,7 @@
 
 ## 📋 **What Was Created**
 
-I've set up **3 GitHub Actions workflows** for your repository:
+I've set up **GitHub Actions workflows** for your repository:
 
 ### **1. CI/CD Pipeline** (`ci.yml`)
 - ✅ Runs **unit tests** on every push/PR
@@ -13,14 +13,9 @@ I've set up **3 GitHub Actions workflows** for your repository:
 - ✅ **Code quality checks** (Flake8, Pylint)
 - ✅ **Security scanning** (Safety, Bandit)
 - ✅ **Build verification** (ensures app can start)
+- ✅ Can be **manually triggered** anytime from GitHub UI
 
-### **2. Scheduled API Tests** (`scheduled-tests.yml`)
-- ✅ Runs **daily at 2 AM UTC** (configurable)
-- ✅ Executes **real API tests** automatically
-- ✅ Stores **test results and logs** for 30 days
-- ✅ Can be **manually triggered** anytime
-
-### **3. Documentation** (`README.md`)
+### **2. Documentation** (`README.md`)
 - ✅ Complete guide for using the workflows
 - ✅ Troubleshooting tips
 - ✅ Customization instructions
@@ -115,32 +110,24 @@ Add this to your `README.md` to show build status:
 3. ✅ **Code quality** checks run (Flake8, Pylint)
 4. ✅ **Security scan** runs (Safety, Bandit)
 5. ✅ **Build check** verifies app starts correctly
-6. ✅ **Results uploaded** as artifacts
+6. ✅ **Results uploaded** as artifacts (kept for 7 days)
 
-### **Every Day at 2 AM UTC:**
+### **Manual Trigger:**
 
-1. ✅ **Scheduled tests trigger** automatically
-2. ✅ **API tests execute** (using your test cases)
-3. ✅ **Test results saved** (available for 30 days)
-4. ✅ **Logs uploaded** for troubleshooting
+You can run the pipeline manually anytime from GitHub Actions tab
 
 ---
 
 ## 🔧 **Manual Trigger (How to Run Tests Manually)**
 
-### **Run CI/CD Pipeline:**
+You can manually trigger the CI/CD pipeline anytime:
 
 1. Go to: **Actions** → **CI/CD Pipeline**
 2. Click: **"Run workflow"** button (top right)
 3. Select: Branch (e.g., `feature/testing`)
 4. Click: **"Run workflow"**
 
-### **Run Scheduled Tests:**
-
-1. Go to: **Actions** → **Scheduled API Tests**
-2. Click: **"Run workflow"** button
-3. Select: Branch
-4. Click: **"Run workflow"**
+The pipeline will run all tests, quality checks, and security scans on demand.
 
 ---
 
@@ -154,28 +141,12 @@ Add this to your `README.md` to show build status:
    - `security-reports` (security scan reports)
 
 **Retention:**
-- Unit test results: **7 days**
-- API test results: **30 days**
+- Test results: **7 days**
 - Security reports: **7 days**
 
 ---
 
 ## ⚙️ **Customization Options**
-
-### **Change Test Schedule**
-
-Edit `.github/workflows/scheduled-tests.yml`:
-
-```yaml
-on:
-  schedule:
-    - cron: '0 2 * * *'  # Change this
-```
-
-**Examples:**
-- `0 */6 * * *` → Every 6 hours
-- `0 9 * * 1-5` → Weekdays at 9 AM
-- `0 0 * * 1` → Every Monday at midnight
 
 ### **Add More Python Versions**
 
@@ -198,7 +169,7 @@ strategy:
 | **Early Bug Detection** | Catch issues before they reach production |
 | **Code Quality** | Maintains high code standards automatically |
 | **Security** | Identifies vulnerabilities early |
-| **Scheduled Monitoring** | API tests run daily to catch regressions |
+| **Manual Execution** | Run tests on-demand anytime you need |
 | **Free** | GitHub Actions is free for public repositories! |
 
 ---

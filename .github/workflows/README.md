@@ -23,22 +23,6 @@ This directory contains automated workflows for the Python Web API Testing Frame
 
 ---
 
-### 2. **Scheduled API Tests** (`scheduled-tests.yml`)
-
-**Triggers:**
-- Daily at 2 AM UTC (configurable via cron)
-- Manual trigger via GitHub UI
-
-**Jobs:**
-- ✅ **API Integration Tests** - Runs real API test cases
-- ✅ **Report Generation** - Creates test execution reports
-
-**Artifacts:**
-- API test results (30-day retention)
-- Test logs (30-day retention)
-
----
-
 ## 🚀 Setup Instructions
 
 ### **Step 1: Configure Secrets**
@@ -102,23 +86,14 @@ To manually run a workflow:
 
 ## 🛠️ Customization
 
-### **Change Schedule**
+### **Run Tests Manually**
 
-Edit `.github/workflows/scheduled-tests.yml`:
+You can manually trigger the CI/CD pipeline anytime:
 
-```yaml
-on:
-  schedule:
-    # Run daily at 2 AM UTC
-    - cron: '0 2 * * *'
-```
-
-**Cron format:** `minute hour day month weekday`
-
-**Examples:**
-- `0 */6 * * *` - Every 6 hours
-- `0 0 * * 1` - Every Monday at midnight
-- `0 9 * * 1-5` - Weekdays at 9 AM
+1. Go to **Actions** tab → **CI/CD Pipeline**
+2. Click **"Run workflow"** button
+3. Select your branch
+4. Click **"Run workflow"**
 
 ### **Add More Python Versions**
 
