@@ -1,0 +1,114 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FA-739 Shortage Validation Response Schema",
+  "description": "Validates the response structure for /ShortageValidation/validate endpoint",
+  "type": "object",
+  "required": [
+    "customerNumber",
+    "itemNumber",
+    "serialNumber",
+    "shortageQuantity",
+    "isValid",
+    "validationErrors",
+    "flags",
+    "validatedAt"
+  ],
+  "properties": {
+    "customerNumber": {
+      "type": "string",
+      "description": "Customer number"
+    },
+    "shipToNumber": {
+      "type": ["string", "null"],
+      "description": "Ship-to number"
+    },
+    "invoiceNumber": {
+      "type": ["number", "null"],
+      "description": "Invoice number"
+    },
+    "itemNumber": {
+      "type": "string",
+      "description": "Item number/SKU"
+    },
+    "serialNumber": {
+      "type": "string",
+      "description": "Serial number (999999 for no serial)"
+    },
+    "shortageQuantity": {
+      "type": "number",
+      "description": "Quantity being validated"
+    },
+    "amount": {
+      "type": ["number", "null"],
+      "description": "Credit amount"
+    },
+    "defectCode": {
+      "type": ["string", "null"],
+      "description": "Defect code (e.g., XP)"
+    },
+    "locationCode": {
+      "type": ["string", "null"],
+      "description": "Location code (e.g., WU)"
+    },
+    "orderNumber": {
+      "type": ["string", "null"],
+      "description": "Order number"
+    },
+    "orderItemSeq": {
+      "type": ["number", "null"],
+      "description": "Order item sequence"
+    },
+    "isValid": {
+      "type": "boolean",
+      "description": "Overall validation result - true if all validations passed"
+    },
+    "validationErrors": {
+      "type": "string",
+      "description": "Validation message - SUCCESS or error details"
+    },
+    "orderedQuantity": {
+      "type": ["number", "null"],
+      "description": "Quantity originally ordered"
+    },
+    "alreadyCreditedQuantity": {
+      "type": ["number", "null"],
+      "description": "Quantity already credited"
+    },
+    "remainingCreditableQuantity": {
+      "type": ["number", "null"],
+      "description": "Quantity available for credit"
+    },
+    "flags": {
+      "type": "object",
+      "required": ["itemExists", "customerSerialItemValid", "defectCodeValid", "locationCodeValid"],
+      "properties": {
+        "itemExists": {
+          "type": "boolean",
+          "description": "Validation Rule #1 - Item exists in system"
+        },
+        "customerSerialItemValid": {
+          "type": "boolean",
+          "description": "Validation Rule #2 - Customer/Serial/Item combination is valid"
+        },
+        "defectCodeValid": {
+          "type": "boolean",
+          "description": "Validation Rule #5 - Defect code is valid"
+        },
+        "locationCodeValid": {
+          "type": "boolean",
+          "description": "Validation Rule #6 - Location code is valid"
+        }
+      }
+    },
+    "validatedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when validation occurred"
+    },
+    "serialFromIWS": {
+      "type": ["boolean", "null"],
+      "description": "Whether serial number was retrieved from IWS system"
+    }
+  }
+}
+
